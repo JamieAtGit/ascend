@@ -143,7 +143,7 @@ export default function Dashboard() {
                   fontFamily: 'Orbitron, sans-serif', fontSize: 7,
                   letterSpacing: '0.2em', color: '#252525',
                 }}>
-                  TOTAL_XP: {xp} · NODES: {unlockedNodes.length + masteredNodes.length} / 23
+                  TOTAL_XP: {xp} · NODES: {unlockedNodes.length + masteredNodes.length} / 37
                 </div>
               </div>
 

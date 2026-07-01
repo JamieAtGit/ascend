@@ -363,8 +363,8 @@ export default function NodePanel({ node, onClose }: Props) {
                                 <div style={{
                                   width: 22, height: 22, flexShrink: 0,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  background: done ? '#'5FFF3D'12' : '#0e0e18',
-                                  border: `1px solid ${done ? '#'5FFF3D'30' : '#1e1e2a'}`,
+                                  background: done ? '#5FFF3D12' : '#0e0e18',
+                                  border: `1px solid ${done ? '#5FFF3D30' : '#1e1e2a'}`,
                                 }}>
                                   {done ? (
                                     <span style={{ color: '#5FFF3D', fontSize: 11 }}>✓</span>
