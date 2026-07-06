@@ -10,6 +10,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'tree', label: 'SKILL TREE', icon: '◈' },
+  { id: 'sprint', label: 'SPRINT', icon: '⚡' },
   { id: 'time', label: 'TIME', icon: '◷' },
   { id: 'stats', label: 'STATS', icon: '▣' },
   { id: 'xpledger', label: 'XP LEDGER', icon: '⊞' },

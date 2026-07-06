@@ -5,6 +5,7 @@ import LessonView from './components/LessonView';
 import TimeTracker from './components/TimeTracker';
 import ProgressDashboard from './components/ProgressDashboard';
 import XPEditor from './components/XPEditor';
+import SkillSprint from './components/SkillSprint';
 
 export default function App() {
   const view = useAscendStore((s) => s.view);
@@ -18,6 +19,7 @@ export default function App() {
       <TimeTracker />
       <ProgressDashboard />
       <XPEditor />
+      <SkillSprint />
       {activeLesson && <LessonView />}
     </>
   );

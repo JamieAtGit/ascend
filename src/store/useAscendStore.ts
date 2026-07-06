@@ -33,7 +33,7 @@ export interface ActiveTimer {
   label: string;
 }
 
-export type OverlayView = 'time' | 'stats' | 'xpledger' | null;
+export type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | null;
 
 const TIME_XP_RATE: Record<TimeCategory, number> = {
   Learning: 4,
@@ -78,6 +78,13 @@ interface AscendState {
 
   getNodeStatus: (id: string) => 'locked' | 'available' | 'unlocked' | 'mastered';
   getAvailableXP: () => number;
+
+  // Sprint
+  completedSprints: string[];
+  sprintProgress: Record<string, string[]>; // sprintId -> completed stepIds
+  completeSprintStep: (sprintId: string, stepId: string) => void;
+  completeSprint: (sprintId: string, xpReward: number) => void;
+  clearSprintProgress: (sprintId: string) => void;
 }
 
 export function xpForLevel(level: number): number {
@@ -125,6 +132,8 @@ export const useAscendStore = create<AscendState>()(
       view: 'landing',
       currentStreak: 0,
       lastActiveDate: null,
+      completedSprints: [],
+      sprintProgress: {},
 
       setView: (v) => set({ view: v }),
       setOverlay: (o) => set({ overlay: o }),
@@ -135,7 +144,39 @@ export const useAscendStore = create<AscendState>()(
         spentXP: {}, unlockedNodes: [], masteredNodes: [],
         xpHistory: [], completedLessons: [], timeEntries: [],
         activeTimer: null, currentStreak: 0, lastActiveDate: null,
+        completedSprints: [], sprintProgress: {},
       }),
+
+      completeSprintStep: (sprintId, stepId) =>
+        set((state) => {
+          const current = state.sprintProgress[sprintId] ?? [];
+          if (current.includes(stepId)) return state;
+          return { sprintProgress: { ...state.sprintProgress, [sprintId]: [...current, stepId] } };
+        }),
+
+      completeSprint: (sprintId, xpReward) => {
+        const state = get();
+        if (state.completedSprints.includes(sprintId)) return;
+        const entry: XPEntry = { id: mkId(), label: `SPRINT_COMPLETE`, xp: xpReward, timestamp: Date.now() };
+        const newXP = state.xp + xpReward;
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        const newStreak = state.lastActiveDate === today
+          ? state.currentStreak
+          : state.lastActiveDate === yesterday ? state.currentStreak + 1 : 1;
+        set({
+          xp: newXP, level: computeLevel(newXP),
+          xpHistory: [entry, ...state.xpHistory],
+          completedSprints: [...state.completedSprints, sprintId],
+          currentStreak: newStreak, lastActiveDate: today,
+        });
+      },
+
+      clearSprintProgress: (sprintId) =>
+        set((state) => {
+          const { [sprintId]: _, ...rest } = state.sprintProgress;
+          return { sprintProgress: rest };
+        }),
 
       addXP: (amount, label) =>
         set((state) => {
@@ -302,6 +343,8 @@ export const useAscendStore = create<AscendState>()(
         timeEntries: state.timeEntries,
         currentStreak: state.currentStreak,
         lastActiveDate: state.lastActiveDate,
+        completedSprints: state.completedSprints,
+        sprintProgress: state.sprintProgress,
       }),
     }
   )
