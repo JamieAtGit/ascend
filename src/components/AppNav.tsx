@@ -36,7 +36,7 @@ export default function AppNav() {
       position: 'fixed',
       bottom: 0, left: '50%',
       transform: 'translateX(-50%)',
-      zIndex: 48,
+      zIndex: 300,
       display: 'flex',
       gap: 1,
       background: 'rgba(2,2,5,0.98)',

@@ -326,6 +326,108 @@ export const NODES: SkillNode[] = [
     position: { x: 3540, y: 370 },
   },
 
+  // ── PHYSICAL (additional) ───────────────────────────────────────────────────
+  {
+    id: 'sleep_science',
+    name: 'SLEEP SCIENCE',
+    category: 'PHYSICAL',
+    description: 'The foundation of recovery. Circadian rhythms, sleep architecture, and performance restoration.',
+    xpCost: 60, masteryThreshold: 180,
+    requiredNodes: [],
+    position: { x: 90, y: 160 },
+  },
+  {
+    id: 'hiit_training',
+    name: 'HIIT TRAINING',
+    category: 'PHYSICAL',
+    description: 'Maximum output in minimum time. High-intensity intervals for conditioning and fat loss.',
+    xpCost: 70, masteryThreshold: 210,
+    requiredNodes: ['endurance'],
+    position: { x: 100, y: 590 },
+  },
+
+  // ── MENTAL (additional) ─────────────────────────────────────────────────────
+  {
+    id: 'resilience',
+    name: 'RESILIENCE',
+    category: 'MENTAL',
+    description: 'Antifragility under pressure. Bouncing back stronger from setbacks, failure, and adversity.',
+    xpCost: 80, masteryThreshold: 240,
+    requiredNodes: ['discipline'],
+    position: { x: 595, y: 560 },
+  },
+  {
+    id: 'memory_techniques',
+    name: 'MEMORY',
+    category: 'MENTAL',
+    description: 'Cognitive enhancement. Memory palaces, spaced repetition, and retention engineering.',
+    xpCost: 75, masteryThreshold: 225,
+    requiredNodes: ['focus'],
+    position: { x: 700, y: 160 },
+  },
+
+  // ── INTELLECTUAL (additional) ────────────────────────────────────────────────
+  {
+    id: 'critical_thinking',
+    name: 'CRITICAL THINKING',
+    category: 'INTELLECTUAL',
+    description: 'Logical rigour. Argument analysis, logical fallacies, bias detection, and evidence evaluation.',
+    xpCost: 85, masteryThreshold: 255,
+    requiredNodes: ['learning'],
+    position: { x: 850, y: 370 },
+  },
+
+  // ── FINANCIAL (additional) ───────────────────────────────────────────────────
+  {
+    id: 'tax_basics',
+    name: 'TAX BASICS',
+    category: 'FINANCIAL',
+    description: 'UK tax literacy. PAYE, self-assessment, ISAs, National Insurance, and legal optimisation.',
+    xpCost: 75, masteryThreshold: 225,
+    requiredNodes: ['saving'],
+    position: { x: 1340, y: 490 },
+  },
+  {
+    id: 'real_estate',
+    name: 'REAL ESTATE',
+    category: 'FINANCIAL',
+    description: 'Property as an asset class. Buy-to-let fundamentals, leverage, yields, and the property ladder.',
+    xpCost: 120, masteryThreshold: 360,
+    requiredNodes: ['investing'],
+    position: { x: 1510, y: 360 },
+  },
+
+  // ── ACADEMIC (additional) ────────────────────────────────────────────────────
+  {
+    id: 'psychology',
+    name: 'PSYCHOLOGY',
+    category: 'ACADEMIC',
+    description: 'The science of mind and behaviour. Cognitive biases, motivation, personality, and social influence.',
+    xpCost: 85, masteryThreshold: 255,
+    requiredNodes: ['science_foundations'],
+    position: { x: 1770, y: 430 },
+  },
+
+  // ── CRAFT (additional) ───────────────────────────────────────────────────────
+  {
+    id: 'photography',
+    name: 'PHOTOGRAPHY',
+    category: 'CRAFT',
+    description: 'Visual storytelling. Composition rules, exposure triangle, light reading, and post-processing.',
+    xpCost: 65, masteryThreshold: 195,
+    requiredNodes: [],
+    position: { x: 2325, y: 390 },
+  },
+  {
+    id: 'coding_basics',
+    name: 'CODING',
+    category: 'CRAFT',
+    description: 'Programming fundamentals. Logic, variables, loops, and building your first real project.',
+    xpCost: 90, masteryThreshold: 270,
+    requiredNodes: [],
+    position: { x: 2510, y: 240 },
+  },
+
   // ── TRADING ─────────────────────────────────────────────────────────────────
   {
     id: 'markets_101',
