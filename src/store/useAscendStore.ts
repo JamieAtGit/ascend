@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { NODES } from '../data/nodes';
+import { LESSONS_BY_NODE } from '../data/lessons';
 
 export type TimeCategory = 'Learning' | 'Fitness' | 'Music' | 'Productivity' | 'Other';
 
@@ -33,7 +34,34 @@ export interface ActiveTimer {
   label: string;
 }
 
-export type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | null;
+export type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | 'review' | null;
+
+// Spaced repetition: successful review count (stage) maps to next interval.
+// Unreviewed completed lessons are due 1 day after completion.
+export const REVIEW_INTERVALS_DAYS = [1, 3, 7, 21, 60];
+const DAY_MS = 86400000;
+
+export interface ReviewState {
+  due: number;    // timestamp when next review is due
+  stage: number;  // number of consecutive successful reviews
+  lapses: number; // times the lesson was failed in review
+}
+
+// Pure helper: which completed lessons are due for review right now.
+// Lessons never reviewed are due completedAt + 1 day.
+export function computeDueLessons(
+  completedLessons: LessonCompletion[],
+  reviewStates: Record<string, ReviewState>,
+  now: number = Date.now()
+): string[] {
+  return completedLessons
+    .filter((c) => {
+      const state = reviewStates[c.lessonId];
+      const due = state ? state.due : c.completedAt + DAY_MS;
+      return due <= now;
+    })
+    .map((c) => c.lessonId);
+}
 
 const TIME_XP_RATE: Record<TimeCategory, number> = {
   Learning: 4,
@@ -85,10 +113,21 @@ interface AscendState {
   completeSprintStep: (sprintId: string, stepId: string) => void;
   completeSprint: (sprintId: string, xpReward: number) => void;
   clearSprintProgress: (sprintId: string) => void;
+
+  // Spaced repetition review
+  reviewStates: Record<string, ReviewState>; // lessonId -> state
+  recordReview: (lessonId: string, allCorrect: boolean) => void;
+
+  // Mastery exams
+  passedExams: string[]; // nodeIds whose mastery exam has been passed
+  passExam: (nodeId: string) => void;
 }
 
+// 1.35 growth keeps long-term levelling alive: all one-time content (~11.7k XP)
+// reaches ~L13; an engaged year lands ~L14-15 with months-not-years per level after.
+// (Was 1.5, which stalled around L10-11.)
 export function xpForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(1.5, level - 1));
+  return Math.floor(100 * Math.pow(1.35, level - 1));
 }
 
 export function computeLevel(totalXP: number): number {
@@ -134,6 +173,8 @@ export const useAscendStore = create<AscendState>()(
       lastActiveDate: null,
       completedSprints: [],
       sprintProgress: {},
+      reviewStates: {},
+      passedExams: [],
 
       setView: (v) => set({ view: v }),
       setOverlay: (o) => set({ overlay: o }),
@@ -145,6 +186,7 @@ export const useAscendStore = create<AscendState>()(
         xpHistory: [], completedLessons: [], timeEntries: [],
         activeTimer: null, currentStreak: 0, lastActiveDate: null,
         completedSprints: [], sprintProgress: {},
+        reviewStates: {}, passedExams: [],
       }),
 
       completeSprintStep: (sprintId, stepId) =>
@@ -177,6 +219,59 @@ export const useAscendStore = create<AscendState>()(
           const { [sprintId]: _, ...rest } = state.sprintProgress;
           return { sprintProgress: rest };
         }),
+
+      recordReview: (lessonId, allCorrect) => {
+        const state = get();
+        const prev = state.reviewStates[lessonId];
+        const now = Date.now();
+        if (allCorrect) {
+          const stage = (prev?.stage ?? 0) + 1;
+          const interval = REVIEW_INTERVALS_DAYS[Math.min(stage, REVIEW_INTERVALS_DAYS.length - 1)];
+          // Later-stage recalls (21/60-day) are rarer and prove more retention — pay more
+          const reviewXP = Math.min(5 + (stage - 1) * 2, 13);
+          const xpEntry: XPEntry = { id: mkId(), label: 'REVIEW_PASS', xp: reviewXP, timestamp: now };
+          const newXP = state.xp + reviewXP;
+          set({
+            reviewStates: {
+              ...state.reviewStates,
+              [lessonId]: { due: now + interval * DAY_MS, stage, lapses: prev?.lapses ?? 0 },
+            },
+            xp: newXP,
+            level: computeLevel(newXP),
+            xpHistory: [xpEntry, ...state.xpHistory],
+          });
+        } else {
+          set({
+            reviewStates: {
+              ...state.reviewStates,
+              [lessonId]: { due: now + DAY_MS, stage: 0, lapses: (prev?.lapses ?? 0) + 1 },
+            },
+          });
+        }
+      },
+
+      passExam: (nodeId) => {
+        const state = get();
+        if (state.passedExams.includes(nodeId)) return;
+        const node = NODES.find((n) => n.id === nodeId);
+        if (!node) return;
+        const bonusXP = Math.floor(node.xpCost / 2);
+        const xpEntry: XPEntry = { id: mkId(), label: 'EXAM_PASS', xp: bonusXP, timestamp: Date.now() };
+        const newXP = state.xp + bonusXP;
+        const passedExams = [...state.passedExams, nodeId];
+        // Exam pass can complete mastery if the XP investment is already there
+        const invested = state.spentXP[nodeId] ?? 0;
+        const nowMastered = state.unlockedNodes.includes(nodeId) && invested >= node.masteryThreshold;
+        set({
+          passedExams,
+          xp: newXP,
+          level: computeLevel(newXP),
+          xpHistory: [xpEntry, ...state.xpHistory],
+          masteredNodes: nowMastered
+            ? [...new Set([...state.masteredNodes, nodeId])]
+            : state.masteredNodes,
+        });
+      },
 
       addXP: (amount, label) =>
         set((state) => {
@@ -231,7 +326,8 @@ export const useAscendStore = create<AscendState>()(
         if (!state.activeTimer) return;
         const minutes = Math.round((Date.now() - state.activeTimer.startedAt) / 60000);
         if (minutes < 1) { set({ activeTimer: null }); return; }
-        const xpEarned = Math.max(1, Math.floor(minutes * TIME_XP_RATE[state.activeTimer.category] / 10));
+        // Rate/4: Learning ≈ 1 XP/min — balanced against lessons (~25 XP for ~10 min of study)
+        const xpEarned = Math.max(1, Math.floor(minutes * TIME_XP_RATE[state.activeTimer.category] / 4));
         const timeEntry: TimeEntry = {
           id: mkId(), category: state.activeTimer.category, minutes,
           label: state.activeTimer.label || state.activeTimer.category,
@@ -254,7 +350,7 @@ export const useAscendStore = create<AscendState>()(
       addManualTime: (category, minutes, label) => {
         const state = get();
         if (minutes <= 0) return;
-        const xpEarned = Math.max(1, Math.floor(minutes * TIME_XP_RATE[category] / 10));
+        const xpEarned = Math.max(1, Math.floor(minutes * TIME_XP_RATE[category] / 4));
         const timeEntry: TimeEntry = {
           id: mkId(), category, minutes,
           label: label || category, timestamp: Date.now(), xpEarned,
@@ -303,7 +399,11 @@ export const useAscendStore = create<AscendState>()(
         if (invest <= 0) return;
 
         const newSpentXP = { ...state.spentXP, [nodeId]: (state.spentXP[nodeId] ?? 0) + invest };
-        const isMastered = newSpentXP[nodeId] >= node.masteryThreshold;
+        // Mastery requires the XP threshold AND, for nodes with lessons, a passed mastery exam.
+        // Nodes without lessons keep the XP-only rule.
+        const hasLessons = (LESSONS_BY_NODE[nodeId]?.length ?? 0) > 0;
+        const examOk = !hasLessons || state.passedExams.includes(nodeId);
+        const isMastered = newSpentXP[nodeId] >= node.masteryThreshold && examOk;
         set({
           spentXP: newSpentXP,
           masteredNodes: isMastered
@@ -345,6 +445,8 @@ export const useAscendStore = create<AscendState>()(
         lastActiveDate: state.lastActiveDate,
         completedSprints: state.completedSprints,
         sprintProgress: state.sprintProgress,
+        reviewStates: state.reviewStates,
+        passedExams: state.passedExams,
       }),
     }
   )

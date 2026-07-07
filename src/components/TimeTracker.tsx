@@ -54,7 +54,7 @@ export default function TimeTracker() {
   if (!isOpen) return null;
 
   const previewXP = activeTimer
-    ? Math.max(1, Math.floor((elapsed / 60000) * XP_RATES[activeTimer.category] / 10))
+    ? Math.max(1, Math.floor((elapsed / 60000) * XP_RATES[activeTimer.category] / 4))
     : 0;
 
   const handleStart = () => {
@@ -272,7 +272,7 @@ export default function TimeTracker() {
                   fontSize: 9, fontFamily: 'Orbitron, sans-serif',
                   color: '#5FFF3D', opacity: 0.7, letterSpacing: '0.2em',
                 }}>
-                  ≈ {Math.max(1, Math.floor(parseInt(manualMins) * XP_RATES[manualCat] / 10))} XP
+                  ≈ {Math.max(1, Math.floor(parseInt(manualMins) * XP_RATES[manualCat] / 4))} XP
                 </div>
               )}
             </div>

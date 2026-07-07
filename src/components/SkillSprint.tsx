@@ -345,139 +345,17 @@ function SprintPlanView({
 
         {/* Steps */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {sprint.steps.map((step, index) => {
-            const done = completedSteps.includes(step.id);
-            const [expanded, setExpanded] = useState(false);
-
-            return (
-              <motion.div
-                key={step.id}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.04 }}
-                style={{
-                  background: done ? `${sprint.color}08` : '#06060E',
-                  border: `1px solid ${done ? sprint.color + '33' : '#0e0e1a'}`,
-                  borderRadius: 3, overflow: 'hidden',
-                }}
-              >
-                {/* Step header */}
-                <div
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setExpanded((e) => !e)}
-                >
-                  {/* Checkbox */}
-                  <div
-                    onClick={(e) => { e.stopPropagation(); handleStepToggle(step.id); }}
-                    style={{
-                      width: 20, height: 20, borderRadius: 2, flexShrink: 0,
-                      border: `1.5px solid ${done ? sprint.color : '#222'}`,
-                      background: done ? sprint.color : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      boxShadow: done ? `0 0 8px ${sprint.color}66` : undefined,
-                    }}
-                  >
-                    {done && <span style={{ fontSize: 10, color: '#000', fontWeight: 700 }}>✓</span>}
-                  </div>
-
-                  {/* Step number */}
-                  <div style={{
-                    fontFamily: 'Orbitron, sans-serif', fontSize: 9, color: '#333',
-                    minWidth: 18, textAlign: 'center',
-                  }}>
-                    {index + 1}
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      color: done ? '#888' : '#D0D0D0', fontSize: 13,
-                      textDecoration: done ? 'line-through' : 'none',
-                    }}>
-                      {step.title}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    <span style={{
-                      fontFamily: 'Orbitron, sans-serif', fontSize: 8, color: '#333',
-                      letterSpacing: '0.1em',
-                    }}>
-                      {step.duration}m
-                    </span>
-                    <span style={{ color: '#333', fontSize: 10 }}>
-                      {expanded ? '▲' : '▼'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Expanded content */}
-                <AnimatePresence>
-                  {expanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      style={{ overflow: 'hidden' }}
-                    >
-                      <div style={{ padding: '0 16px 16px 52px', borderTop: '1px solid #0e0e1a' }}>
-                        <p style={{ color: '#888', fontSize: 13, lineHeight: 1.8, margin: '14px 0 12px' }}>
-                          {step.instruction}
-                        </p>
-                        {step.tip && (
-                          <div style={{
-                            background: '#08080f', border: '1px solid #151515',
-                            borderRadius: 3, padding: '10px 14px', marginBottom: 10,
-                          }}>
-                            <span style={{
-                              fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.15em',
-                              color: '#555',
-                            }}>
-                              TIP:{' '}
-                            </span>
-                            <span style={{ color: '#666', fontSize: 12 }}>{step.tip}</span>
-                          </div>
-                        )}
-                        {step.actionPrompt && (
-                          <div style={{
-                            background: `${sprint.color}0A`, border: `1px solid ${sprint.color}22`,
-                            borderRadius: 3, padding: '10px 14px',
-                          }}>
-                            <div style={{
-                              fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.15em',
-                              color: sprint.color, marginBottom: 4,
-                            }}>
-                              ACTION
-                            </div>
-                            <p style={{ color: '#B0B0B0', fontSize: 12, margin: 0, lineHeight: 1.7 }}>
-                              {step.actionPrompt}
-                            </p>
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                          <button
-                            onClick={() => setFocusStep(index)}
-                            style={{
-                              padding: '6px 14px', border: `1px solid ${sprint.color}44`,
-                              background: 'transparent', color: sprint.color,
-                              fontFamily: 'Orbitron, sans-serif', fontSize: 8, letterSpacing: '0.12em',
-                              cursor: 'pointer', borderRadius: 2,
-                            }}
-                          >
-                            FOCUS MODE
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
+          {sprint.steps.map((step, index) => (
+            <StepItem
+              key={step.id}
+              step={step}
+              index={index}
+              color={sprint.color}
+              done={completedSteps.includes(step.id)}
+              onToggle={() => handleStepToggle(step.id)}
+              onFocus={() => setFocusStep(index)}
+            />
+          ))}
         </div>
 
         {/* Reset */}
@@ -495,6 +373,143 @@ function SprintPlanView({
         )}
       </div>
     </>
+  );
+}
+
+// ─── Step Item ───────────────────────────────────────────────────
+
+function StepItem({ step, index, color, done, onToggle, onFocus }: {
+  step: SprintStep; index: number; color: string;
+  done: boolean; onToggle: () => void; onFocus: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04 }}
+      style={{
+        background: done ? `${color}08` : '#06060E',
+        border: `1px solid ${done ? color + '33' : '#0e0e1a'}`,
+        borderRadius: 3, overflow: 'hidden',
+      }}
+    >
+      {/* Step header */}
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+          cursor: 'pointer',
+        }}
+        onClick={() => setExpanded((e) => !e)}
+      >
+        {/* Checkbox */}
+        <div
+          onClick={(e) => { e.stopPropagation(); onToggle(); }}
+          style={{
+            width: 20, height: 20, borderRadius: 2, flexShrink: 0,
+            border: `1.5px solid ${done ? color : '#222'}`,
+            background: done ? color : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', transition: 'all 0.2s',
+            boxShadow: done ? `0 0 8px ${color}66` : undefined,
+          }}
+        >
+          {done && <span style={{ fontSize: 10, color: '#000', fontWeight: 700 }}>✓</span>}
+        </div>
+
+        {/* Step number */}
+        <div style={{
+          fontFamily: 'Orbitron, sans-serif', fontSize: 9, color: '#333',
+          minWidth: 18, textAlign: 'center',
+        }}>
+          {index + 1}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            color: done ? '#888' : '#D0D0D0', fontSize: 13,
+            textDecoration: done ? 'line-through' : 'none',
+          }}>
+            {step.title}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <span style={{
+            fontFamily: 'Orbitron, sans-serif', fontSize: 8, color: '#333',
+            letterSpacing: '0.1em',
+          }}>
+            {step.duration}m
+          </span>
+          <span style={{ color: '#333', fontSize: 10 }}>
+            {expanded ? '▲' : '▼'}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded content */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ padding: '0 16px 16px 52px', borderTop: '1px solid #0e0e1a' }}>
+              <p style={{ color: '#888', fontSize: 13, lineHeight: 1.8, margin: '14px 0 12px' }}>
+                {step.instruction}
+              </p>
+              {step.tip && (
+                <div style={{
+                  background: '#08080f', border: '1px solid #151515',
+                  borderRadius: 3, padding: '10px 14px', marginBottom: 10,
+                }}>
+                  <span style={{
+                    fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.15em',
+                    color: '#555',
+                  }}>
+                    TIP:{' '}
+                  </span>
+                  <span style={{ color: '#666', fontSize: 12 }}>{step.tip}</span>
+                </div>
+              )}
+              {step.actionPrompt && (
+                <div style={{
+                  background: `${color}0A`, border: `1px solid ${color}22`,
+                  borderRadius: 3, padding: '10px 14px',
+                }}>
+                  <div style={{
+                    fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.15em',
+                    color, marginBottom: 4,
+                  }}>
+                    ACTION
+                  </div>
+                  <p style={{ color: '#B0B0B0', fontSize: 12, margin: 0, lineHeight: 1.7 }}>
+                    {step.actionPrompt}
+                  </p>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button
+                  onClick={onFocus}
+                  style={{
+                    padding: '6px 14px', border: `1px solid ${color}44`,
+                    background: 'transparent', color,
+                    fontFamily: 'Orbitron, sans-serif', fontSize: 8, letterSpacing: '0.12em',
+                    cursor: 'pointer', borderRadius: 2,
+                  }}
+                >
+                  FOCUS MODE
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 

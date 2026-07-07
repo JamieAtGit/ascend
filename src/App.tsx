@@ -1,11 +1,16 @@
+import { lazy, Suspense } from 'react';
 import { useAscendStore } from './store/useAscendStore';
 import Landing from './components/Landing';
 import SkillTree from './components/SkillTree';
-import LessonView from './components/LessonView';
-import TimeTracker from './components/TimeTracker';
-import ProgressDashboard from './components/ProgressDashboard';
-import XPEditor from './components/XPEditor';
-import SkillSprint from './components/SkillSprint';
+
+// Overlays are code-split: they load on demand, keeping the main bundle
+// (canvas + store + lesson data) as small as possible.
+const LessonView = lazy(() => import('./components/LessonView'));
+const TimeTracker = lazy(() => import('./components/TimeTracker'));
+const ProgressDashboard = lazy(() => import('./components/ProgressDashboard'));
+const XPEditor = lazy(() => import('./components/XPEditor'));
+const SkillSprint = lazy(() => import('./components/SkillSprint'));
+const ReviewQueue = lazy(() => import('./components/ReviewQueue'));
 
 export default function App() {
   const view = useAscendStore((s) => s.view);
@@ -16,11 +21,14 @@ export default function App() {
   return (
     <>
       <SkillTree />
-      <TimeTracker />
-      <ProgressDashboard />
-      <XPEditor />
-      <SkillSprint />
-      {activeLesson && <LessonView />}
+      <Suspense fallback={null}>
+        <TimeTracker />
+        <ProgressDashboard />
+        <XPEditor />
+        <SkillSprint />
+        <ReviewQueue />
+        {activeLesson && <LessonView />}
+      </Suspense>
     </>
   );
 }

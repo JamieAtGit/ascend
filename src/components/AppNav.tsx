@@ -1,5 +1,6 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useAscendStore } from '../store/useAscendStore';
+import { useAscendStore, computeDueLessons } from '../store/useAscendStore';
 import type { OverlayView } from '../store/useAscendStore';
 
 interface NavItem {
@@ -11,6 +12,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'tree', label: 'SKILL TREE', icon: '◈' },
   { id: 'sprint', label: 'SPRINT', icon: '⚡' },
+  { id: 'review', label: 'REVIEW', icon: '↻' },
   { id: 'time', label: 'TIME', icon: '◷' },
   { id: 'stats', label: 'STATS', icon: '▣' },
   { id: 'xpledger', label: 'XP LEDGER', icon: '⊞' },
@@ -20,6 +22,13 @@ export default function AppNav() {
   const overlay = useAscendStore((s) => s.overlay);
   const setOverlay = useAscendStore((s) => s.setOverlay);
   const activeTimer = useAscendStore((s) => s.activeTimer);
+  const completedLessons = useAscendStore((s) => s.completedLessons);
+  const reviewStates = useAscendStore((s) => s.reviewStates);
+
+  const dueCount = useMemo(
+    () => computeDueLessons(completedLessons, reviewStates).length,
+    [completedLessons, reviewStates]
+  );
 
   const active = overlay ?? 'tree';
 
@@ -99,6 +108,22 @@ export default function AppNav() {
                 boxShadow: '0 0 6px #FF5592',
                 animation: 'flicker 2s infinite',
               }} />
+            )}
+
+            {/* Review due badge */}
+            {item.id === 'review' && dueCount > 0 && (
+              <div style={{
+                position: 'absolute', top: 5, right: 10,
+                minWidth: 14, height: 14, borderRadius: 7,
+                padding: '0 4px',
+                background: '#8833FF',
+                boxShadow: '0 0 8px #8833FF',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'Orbitron, sans-serif', fontSize: 7,
+                color: '#FFF', fontWeight: 700,
+              }}>
+                {dueCount > 99 ? '99+' : dueCount}
+              </div>
             )}
 
             <span style={{ fontSize: 14, lineHeight: 1 }}>{item.icon}</span>

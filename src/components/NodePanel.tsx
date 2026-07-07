@@ -5,6 +5,7 @@ import { CATEGORY_COLORS, CATEGORY_GLOW } from '../data/nodes';
 import { useAscendStore } from '../store/useAscendStore';
 import { LESSONS_BY_NODE } from '../data/lessons';
 import type { Difficulty } from '../data/lessons';
+import MasteryExam from './MasteryExam';
 
 interface Props {
   node: SkillNode | null;
@@ -21,6 +22,7 @@ type Tab = 'info' | 'lessons';
 
 export default function NodePanel({ node, onClose }: Props) {
   const [tab, setTab] = useState<Tab>('info');
+  const [showExam, setShowExam] = useState(false);
 
   const getNodeStatus = useAscendStore((s) => s.getNodeStatus);
   const unlockNode = useAscendStore((s) => s.unlockNode);
@@ -29,6 +31,7 @@ export default function NodePanel({ node, onClose }: Props) {
   const spentXP = useAscendStore((s) => s.spentXP);
   const completedLessons = useAscendStore((s) => s.completedLessons);
   const setActiveLesson = useAscendStore((s) => s.setActiveLesson);
+  const passedExams = useAscendStore((s) => s.passedExams);
 
   const status = node ? getNodeStatus(node.id) : 'locked';
   const available = getAvailableXP();
@@ -42,6 +45,8 @@ export default function NodePanel({ node, onClose }: Props) {
   const lessons = node ? (LESSONS_BY_NODE[node.id] ?? []) : [];
   const completedSet = new Set(completedLessons.map((c) => c.lessonId));
   const lessonsDone = lessons.filter((l) => completedSet.has(l.id)).length;
+  const allLessonsDone = lessons.length > 0 && lessonsDone === lessons.length;
+  const examPassed = node ? passedExams.includes(node.id) : false;
 
   const handleNodeChange = () => setTab('info');
 
@@ -154,8 +159,11 @@ export default function NodePanel({ node, onClose }: Props) {
             {/* Divider under tabs */}
             <div style={{ height: 1, background: '#111', flexShrink: 0 }} />
 
-            {/* Tab content */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 20px 20px 22px' }}>
+            {/* Tab content — minHeight: 0 required for flex-child scrolling on mobile */}
+            <div style={{
+              flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 20px 20px 22px',
+              WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain',
+            }}>
               <AnimatePresence mode="wait">
 
                 {tab === 'info' && (
@@ -240,12 +248,24 @@ export default function NodePanel({ node, onClose }: Props) {
                       />
                     )}
                     {status === 'unlocked' && (
-                      <PanelButton
-                        label={available >= 10 ? '▶ INVEST_XP (+10)' : '⚠ INSUFFICIENT_XP'}
-                        disabled={available < 10}
-                        color={color}
-                        onClick={() => investXP(node.id, 10)}
-                      />
+                      <>
+                        <PanelButton
+                          label={available >= 10 ? '▶ INVEST_XP (+10)' : '⚠ INSUFFICIENT_XP'}
+                          disabled={available < 10}
+                          color={color}
+                          onClick={() => investXP(node.id, 10)}
+                        />
+                        {masteryPct >= 1 && lessons.length > 0 && !examPassed && (
+                          <div style={{
+                            marginTop: 8, padding: '8px 12px', textAlign: 'center',
+                            border: '1px solid #FFA33330', background: '#FFA33308',
+                            color: '#FFA333', fontSize: 7, letterSpacing: '0.18em',
+                            fontFamily: 'Orbitron, sans-serif', lineHeight: 1.6,
+                          }}>
+                            XP THRESHOLD REACHED — PASS THE MASTERY EXAM TO MASTER THIS NODE
+                          </div>
+                        )}
+                      </>
                     )}
                     {status === 'mastered' && (
                       <div style={{
@@ -395,6 +415,40 @@ export default function NodePanel({ node, onClose }: Props) {
                             );
                           })}
                         </div>
+
+                        {/* Mastery exam — unlocks when all lessons are done */}
+                        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #111' }}>
+                          <div style={{ fontSize: 7, letterSpacing: '0.2em', color: '#333', fontFamily: 'Orbitron, sans-serif', marginBottom: 8 }}>
+                            MASTERY_EXAM
+                          </div>
+                          {examPassed ? (
+                            <div style={{
+                              textAlign: 'center', padding: '10px',
+                              border: '1px solid #5FFF3D30', color: '#5FFF3D',
+                              fontSize: 8, letterSpacing: '0.25em',
+                              fontFamily: 'Orbitron, sans-serif',
+                              background: '#5FFF3D08',
+                            }}>
+                              ✓ EXAM PASSED
+                            </div>
+                          ) : allLessonsDone ? (
+                            <PanelButton
+                              label="▶ TAKE MASTERY EXAM"
+                              disabled={false}
+                              color={color}
+                              onClick={() => setShowExam(true)}
+                            />
+                          ) : (
+                            <div style={{
+                              padding: '10px 12px',
+                              border: '1px solid #151515', color: '#333',
+                              fontSize: 8, letterSpacing: '0.12em', lineHeight: 1.7,
+                              fontFamily: 'Orbitron, sans-serif',
+                            }}>
+                              COMPLETE ALL {lessons.length} LESSONS TO UNLOCK · 10 RANDOM QUESTIONS · 80% TO PASS · REQUIRED FOR MASTERY
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </motion.div>
@@ -406,6 +460,10 @@ export default function NodePanel({ node, onClose }: Props) {
             {/* Bottom accent */}
             <div style={{ height: 1, background: `linear-gradient(90deg, ${color}25, transparent)`, flexShrink: 0 }} />
           </motion.div>
+
+          {showExam && (
+            <MasteryExam node={node} onClose={() => setShowExam(false)} />
+          )}
         </>
       )}
     </AnimatePresence>

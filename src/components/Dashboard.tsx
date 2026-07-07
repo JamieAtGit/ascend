@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAscendStore } from '../store/useAscendStore';
+import { useAscendStore, computeDueLessons } from '../store/useAscendStore';
+import { LESSONS_BY_NODE } from '../data/lessons';
 
 const QUICK_ACTIONS = [
   { label: 'GYM_SESSION', xp: 20, category: 'PHYSICAL' },
@@ -32,6 +33,79 @@ export default function Dashboard() {
   const unlockedNodes = useAscendStore((s) => s.unlockedNodes);
   const masteredNodes = useAscendStore((s) => s.masteredNodes);
   const xp = useAscendStore((s) => s.xp);
+  const completedLessons = useAscendStore((s) => s.completedLessons);
+  const reviewStates = useAscendStore((s) => s.reviewStates);
+  const sprintProgress = useAscendStore((s) => s.sprintProgress);
+  const completedSprints = useAscendStore((s) => s.completedSprints);
+  const setOverlay = useAscendStore((s) => s.setOverlay);
+  const setActiveLesson = useAscendStore((s) => s.setActiveLesson);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Today panel: due reviews, next suggested lesson, active sprint
+  const dueReviews = useMemo(
+    () => computeDueLessons(completedLessons, reviewStates).length,
+    [completedLessons, reviewStates]
+  );
+
+  const nextLesson = useMemo(() => {
+    const doneSet = new Set(completedLessons.map((c) => c.lessonId));
+    for (const nodeId of [...unlockedNodes, ...masteredNodes]) {
+      const lesson = (LESSONS_BY_NODE[nodeId] ?? []).find((l) => !doneSet.has(l.id));
+      if (lesson) return lesson;
+    }
+    return null;
+  }, [completedLessons, unlockedNodes, masteredNodes]);
+
+  const activeSprintId = useMemo(
+    () => Object.keys(sprintProgress).find(
+      (id) => !completedSprints.includes(id) && (sprintProgress[id]?.length ?? 0) > 0
+    ) ?? null,
+    [sprintProgress, completedSprints]
+  );
+
+  // Sprint data is code-split out of the main bundle — fetch just the title lazily
+  const [activeSprintTitle, setActiveSprintTitle] = useState<string | null>(null);
+  useEffect(() => {
+    if (!activeSprintId) { setActiveSprintTitle(null); return; }
+    let alive = true;
+    import('../data/skillSprints').then(({ SKILL_SPRINTS }) => {
+      if (alive) setActiveSprintTitle(SKILL_SPRINTS.find((s) => s.id === activeSprintId)?.title ?? activeSprintId);
+    });
+    return () => { alive = false; };
+  }, [activeSprintId]);
+
+  const handleExport = () => {
+    const raw = localStorage.getItem('ascend-v2');
+    if (!raw) return;
+    const blob = new Blob([raw], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ascend-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = String(reader.result);
+        const parsed = JSON.parse(text);
+        // Zustand persist format: { state: {...}, version: n }
+        if (!parsed || typeof parsed !== 'object' || !parsed.state) {
+          alert('Invalid backup file — expected an ASCEND export.');
+          return;
+        }
+        localStorage.setItem('ascend-v2', text);
+        location.reload();
+      } catch {
+        alert('Could not read backup file — not valid JSON.');
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const fire = (label: string, amount: number) => {
     addXP(amount, label);
@@ -143,7 +217,7 @@ export default function Dashboard() {
                   fontFamily: 'Orbitron, sans-serif', fontSize: 7,
                   letterSpacing: '0.2em', color: '#252525',
                 }}>
-                  TOTAL_XP: {xp} · NODES: {unlockedNodes.length + masteredNodes.length} / 47
+                  TOTAL_XP: {xp} · NODES: {unlockedNodes.length + masteredNodes.length} / 59
                 </div>
               </div>
 
@@ -151,6 +225,32 @@ export default function Dashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, marginBottom: 18 }}>
                 <StatCell label="UNLOCKED" value={unlockedNodes.length} />
                 <StatCell label="MASTERED" value={masteredNodes.length} />
+              </div>
+
+              {/* Section: today's loop */}
+              <SectionLabel text="> TODAY" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 18 }}>
+                <TodayRow
+                  icon="↻"
+                  label={dueReviews > 0 ? `${dueReviews} REVIEW${dueReviews === 1 ? '' : 'S'} DUE` : 'REVIEWS CLEAR'}
+                  color={dueReviews > 0 ? '#8833FF' : '#2a4a2a'}
+                  actionable={dueReviews > 0}
+                  onClick={() => { setOpen(false); setOverlay('review'); }}
+                />
+                <TodayRow
+                  icon="▶"
+                  label={nextLesson ? `LESSON: ${nextLesson.title.slice(0, 26)}${nextLesson.title.length > 26 ? '…' : ''}` : 'NO LESSON QUEUED — UNLOCK A NODE'}
+                  color={nextLesson ? '#33F3FF' : '#333'}
+                  actionable={!!nextLesson}
+                  onClick={() => { if (nextLesson) { setOpen(false); setActiveLesson(nextLesson.id); } }}
+                />
+                <TodayRow
+                  icon="⚡"
+                  label={activeSprintTitle ? `SPRINT: ${activeSprintTitle.slice(0, 26)}${activeSprintTitle.length > 26 ? '…' : ''}` : 'NO ACTIVE SPRINT'}
+                  color={activeSprintTitle ? '#FFA333' : '#333'}
+                  actionable={true}
+                  onClick={() => { setOpen(false); setOverlay('sprint'); }}
+                />
               </div>
 
               {/* Section: log action */}
@@ -297,6 +397,68 @@ export default function Dashboard() {
                   </div>
                 </>
               )}
+              {/* Backup */}
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #111' }}>
+                <SectionLabel text="> DATA_BACKUP" />
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button
+                    onClick={handleExport}
+                    style={{
+                      flex: 1, padding: '8px 0',
+                      background: 'transparent',
+                      border: '1px solid #1a2a1a',
+                      color: '#3a6a3a',
+                      fontFamily: 'Orbitron, sans-serif',
+                      fontSize: 8, letterSpacing: '0.15em',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#5FFF3D50';
+                      e.currentTarget.style.color = '#5FFF3D';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#1a2a1a';
+                      e.currentTarget.style.color = '#3a6a3a';
+                    }}
+                  >
+                    EXPORT DATA
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      flex: 1, padding: '8px 0',
+                      background: 'transparent',
+                      border: '1px solid #1a1a2a',
+                      color: '#3a3a6a',
+                      fontFamily: 'Orbitron, sans-serif',
+                      fontSize: 8, letterSpacing: '0.15em',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#8833FF50';
+                      e.currentTarget.style.color = '#8833FF';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#1a1a2a';
+                      e.currentTarget.style.color = '#3a3a6a';
+                    }}
+                  >
+                    IMPORT DATA
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json,application/json"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImport(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+              </div>
+
               {/* Reset */}
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #111' }}>
                 <SectionLabel text="> DANGER_ZONE" />
@@ -421,6 +583,45 @@ function SectionLabel({ text }: { text: string }) {
     }}>
       {text}
     </div>
+  );
+}
+
+function TodayRow({ icon, label, color, actionable, onClick }: {
+  icon: string; label: string; color: string; actionable: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={actionable ? onClick : undefined}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 10px', textAlign: 'left',
+        background: 'rgba(10,10,14,0.8)',
+        border: '1px solid #151515',
+        cursor: actionable ? 'pointer' : 'default',
+        transition: 'all 0.15s', width: '100%',
+      }}
+      onMouseEnter={(e) => {
+        if (actionable) {
+          e.currentTarget.style.borderColor = `${color}40`;
+          e.currentTarget.style.background = `${color}08`;
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = '#151515';
+        e.currentTarget.style.background = 'rgba(10,10,14,0.8)';
+      }}
+    >
+      <span style={{ color, fontSize: 11, width: 14, textAlign: 'center', textShadow: actionable ? `0 0 8px ${color}60` : 'none' }}>
+        {icon}
+      </span>
+      <span style={{
+        fontSize: 8, letterSpacing: '0.14em',
+        color: actionable ? '#8C8C8C' : '#3a3a3a',
+        fontFamily: 'Orbitron, sans-serif',
+      }}>
+        {label}
+      </span>
+    </button>
   );
 }
 

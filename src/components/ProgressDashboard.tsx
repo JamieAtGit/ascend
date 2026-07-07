@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAscendStore } from '../store/useAscendStore';
+import { useAscendStore, computeDueLessons } from '../store/useAscendStore';
 import type { TimeCategory } from '../store/useAscendStore';
+import { LESSON_BY_ID } from '../data/lessons';
 
 const CAT_COLOR: Record<TimeCategory, string> = {
   Learning: '#33F3FF',
@@ -175,9 +176,33 @@ export default function ProgressDashboard() {
   const masteredNodes = useAscendStore((s) => s.masteredNodes);
   const xp = useAscendStore((s) => s.xp);
   const level = useAscendStore((s) => s.level);
+  const reviewStates = useAscendStore((s) => s.reviewStates);
 
   const lineRef = useRef<HTMLCanvasElement>(null);
   const barRef = useRef<HTMLCanvasElement>(null);
+
+  // Review analytics
+  const reviewsPassed = xpHistory.filter((e) => e.label === 'REVIEW_PASS').length;
+  const totalLapses = Object.values(reviewStates).reduce((s, r) => s + r.lapses, 0);
+  const totalAttempts = reviewsPassed + totalLapses;
+  const retentionPct = totalAttempts > 0 ? Math.round((reviewsPassed / totalAttempts) * 100) : null;
+  const dueNow = computeDueLessons(completedLessons, reviewStates).length;
+
+  // Knowledge strength: completed lessons bucketed by review stage
+  const stageOf = (lessonId: string) => reviewStates[lessonId]?.stage ?? 0;
+  const strengthBuckets = [
+    { label: 'NEW', desc: 'not yet reviewed', color: '#555', count: completedLessons.filter((c) => stageOf(c.lessonId) === 0).length },
+    { label: 'LEARNING', desc: 'stage 1–2', color: '#FFA333', count: completedLessons.filter((c) => { const s = stageOf(c.lessonId); return s >= 1 && s <= 2; }).length },
+    { label: 'SOLID', desc: 'stage 3–4', color: '#33F3FF', count: completedLessons.filter((c) => { const s = stageOf(c.lessonId); return s >= 3 && s <= 4; }).length },
+    { label: 'PERMANENT', desc: 'stage 5+', color: '#5FFF3D', count: completedLessons.filter((c) => stageOf(c.lessonId) >= 5).length },
+  ];
+  const maxBucket = Math.max(...strengthBuckets.map((b) => b.count), 1);
+
+  // Leakiest lessons: most lapses
+  const leakiest = Object.entries(reviewStates)
+    .filter(([id, r]) => r.lapses > 0 && LESSON_BY_ID[id])
+    .sort((a, b) => b[1].lapses - a[1].lapses)
+    .slice(0, 3);
 
   // XP per day for last 7 days
   const xpByDay = (() => {
@@ -267,7 +292,10 @@ export default function ProgressDashboard() {
             </button>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+          <div style={{
+            flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px',
+            WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain',
+          }}>
 
             {/* Stat grid */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, marginBottom: 28 }}>
@@ -295,7 +323,7 @@ export default function ProgressDashboard() {
             </div>
 
             {/* Time bar chart */}
-            <div>
+            <div style={{ marginBottom: 28 }}>
               <div style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.3em', color: '#333', marginBottom: 12 }}>
                 TIME_LOGGED — BY CATEGORY (MINUTES)
               </div>
@@ -305,6 +333,77 @@ export default function ProgressDashboard() {
                   style={{ width: '100%', height: 140, display: 'block' }}
                 />
               </div>
+            </div>
+
+            {/* Memory retention */}
+            <div>
+              <div style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.3em', color: '#333', marginBottom: 12 }}>
+                MEMORY_RETENTION — SPACED REPETITION
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1, marginBottom: 16 }}>
+                <StatBox label="RETENTION" value={retentionPct !== null ? `${retentionPct}%` : '—'} color={retentionPct === null ? '#555' : retentionPct >= 85 ? '#5FFF3D' : retentionPct >= 70 ? '#FFA333' : '#FF6666'} />
+                <StatBox label="REVIEWS_PASSED" value={String(reviewsPassed)} color="#8833FF" />
+                <StatBox label="LAPSES" value={String(totalLapses)} color="#FF6666" />
+                <StatBox label="DUE_NOW" value={String(dueNow)} color={dueNow > 0 ? '#33F3FF' : '#5FFF3D'} />
+              </div>
+
+              {/* Knowledge strength distribution */}
+              {completedLessons.length > 0 && (
+                <div style={{ background: '#060610', border: '1px solid #111', padding: '14px 16px', marginBottom: 16 }}>
+                  <div style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 6, letterSpacing: '0.2em', color: '#2a2a2a', marginBottom: 10 }}>
+                    KNOWLEDGE_STRENGTH — {completedLessons.length} LESSONS
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {strengthBuckets.map((b) => (
+                      <div key={b.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{
+                          fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.1em',
+                          color: b.color, width: 72, flexShrink: 0,
+                        }}>
+                          {b.label}
+                        </span>
+                        <div style={{ flex: 1, height: 10, background: '#0e0e0e', overflow: 'hidden' }}>
+                          <div style={{
+                            width: `${(b.count / maxBucket) * 100}%`, height: '100%',
+                            background: `linear-gradient(90deg, ${b.color}40, ${b.color})`,
+                            boxShadow: b.count > 0 ? `0 0 6px ${b.color}60` : 'none',
+                            transition: 'width 0.4s',
+                          }} />
+                        </div>
+                        <span style={{
+                          fontFamily: 'Orbitron, sans-serif', fontSize: 8, color: b.count > 0 ? b.color : '#333',
+                          width: 24, textAlign: 'right', flexShrink: 0,
+                        }}>
+                          {b.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Leakiest lessons */}
+              {leakiest.length > 0 && (
+                <div style={{ background: '#060610', border: '1px solid #111', padding: '14px 16px' }}>
+                  <div style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 6, letterSpacing: '0.2em', color: '#2a2a2a', marginBottom: 10 }}>
+                    LEAKIEST_LESSONS — MOST FAILED IN REVIEW
+                  </div>
+                  {leakiest.map(([id, r]) => (
+                    <div key={id} style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '5px 0', borderBottom: '1px solid #0c0c0c',
+                    }}>
+                      <span style={{ fontSize: 10, color: '#666', fontFamily: 'Inter, sans-serif' }}>
+                        {LESSON_BY_ID[id].title}
+                      </span>
+                      <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 8, color: '#FF6666', flexShrink: 0, marginLeft: 12 }}>
+                        {r.lapses} LAPSE{r.lapses === 1 ? '' : 'S'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>

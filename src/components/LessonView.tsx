@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAscendStore } from '../store/useAscendStore';
 import { LESSONS } from '../data/lessons';
@@ -12,6 +12,8 @@ export default function LessonView() {
   const setActiveLesson = useAscendStore((s) => s.setActiveLesson);
   const completeLesson = useAscendStore((s) => s.completeLesson);
   const completedLessons = useAscendStore((s) => s.completedLessons);
+  const startTimer = useAscendStore((s) => s.startTimer);
+  const stopTimer = useAscendStore((s) => s.stopTimer);
 
   const lesson = LESSONS.find((l) => l.id === activeLesson) ?? null;
   const alreadyDone = lesson ? completedLessons.some((c) => c.lessonId === lesson.id) : false;
@@ -21,6 +23,28 @@ export default function LessonView() {
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [warmupPick, setWarmupPick] = useState<number | null>(null);
+
+  // Auto time-tracking: start a Learning timer when a lesson opens (unless one is
+  // already running), stop it when the lesson closes. Time XP accrues automatically.
+  const ourTimerStart = useRef<number | null>(null);
+  useEffect(() => {
+    if (!lesson) return;
+    const state = useAscendStore.getState();
+    if (!state.activeTimer) {
+      startTimer('Learning', `Lesson: ${lesson.title}`);
+      ourTimerStart.current = useAscendStore.getState().activeTimer?.startedAt ?? null;
+    }
+    return () => {
+      const s = useAscendStore.getState();
+      // Only stop the timer we started (user may have started/stopped their own since)
+      if (ourTimerStart.current && s.activeTimer?.startedAt === ourTimerStart.current) {
+        stopTimer();
+      }
+      ourTimerStart.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson?.id]);
 
   const reset = () => {
     setPhase('content');
@@ -28,6 +52,7 @@ export default function LessonView() {
     setAnswers([]);
     setSelected(null);
     setRevealed(false);
+    setWarmupPick(null);
   };
 
   const close = () => {
@@ -81,6 +106,7 @@ export default function LessonView() {
           background: 'rgba(0,0,0,0.92)',
           backdropFilter: 'blur(8px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 10,
         }}
         onClick={(e) => { if (e.target === e.currentTarget) close(); }}
       >
@@ -171,8 +197,13 @@ export default function LessonView() {
             </div>
           </div>
 
-          {/* Body */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+          {/* Body — minHeight: 0 is required for flex-child scrolling (esp. mobile) */}
+          <div style={{
+            flex: 1, minHeight: 0, overflowY: 'auto', padding: '24px',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+            overscrollBehavior: 'contain',
+          }}>
             <AnimatePresence mode="wait">
 
               {phase === 'content' && (
@@ -202,6 +233,66 @@ export default function LessonView() {
                       }}>
                         {(lesson as any).whyItMatters}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Warm-up prediction — unscored active recall before reading.
+                      Guessing first (even wrongly) measurably improves retention. */}
+                  {lesson.quiz.length > 0 && (
+                    <div style={{
+                      padding: '14px 16px', marginBottom: 22,
+                      background: '#08080f', border: '1px solid #1a1a2a',
+                    }}>
+                      <div style={{
+                        fontFamily: 'Orbitron, sans-serif', fontSize: 6,
+                        letterSpacing: '0.3em', color: '#8833FF', marginBottom: 8,
+                      }}>
+                        ⚡ WARM-UP — GUESS BEFORE YOU READ (UNSCORED)
+                      </div>
+                      <p style={{
+                        fontSize: 12, lineHeight: 1.6, color: '#B0B0B0',
+                        fontFamily: 'Inter, sans-serif', margin: '0 0 10px', fontWeight: 500,
+                      }}>
+                        {lesson.quiz[0].question}
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {lesson.quiz[0].options.map((opt, i) => {
+                          const picked = warmupPick === i;
+                          const isCorrect = i === lesson.quiz[0].correctIndex;
+                          const revealedWarmup = warmupPick !== null;
+                          let color = '#555', border = '#15151f';
+                          if (revealedWarmup) {
+                            if (isCorrect) { color = '#5FFF3D'; border = '#5FFF3D40'; }
+                            else if (picked) { color = '#FF6666'; border = '#FF666640'; }
+                          }
+                          return (
+                            <button
+                              key={i}
+                              disabled={warmupPick !== null}
+                              onClick={() => setWarmupPick(i)}
+                              style={{
+                                textAlign: 'left', padding: '8px 12px', fontSize: 11,
+                                background: 'transparent', border: `1px solid ${border}`,
+                                color, fontFamily: 'Inter, sans-serif',
+                                cursor: warmupPick === null ? 'pointer' : 'default',
+                                transition: 'all 0.15s',
+                              }}
+                            >
+                              {opt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {warmupPick !== null && (
+                        <div style={{
+                          marginTop: 10, fontSize: 10, fontFamily: 'Inter, sans-serif',
+                          color: warmupPick === lesson.quiz[0].correctIndex ? '#5FFF3D' : '#FFA333',
+                        }}>
+                          {warmupPick === lesson.quiz[0].correctIndex
+                            ? 'Good instinct — now read to understand why.'
+                            : 'Wrong guesses prime memory better than no guess — the answer is below.'}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -371,6 +462,34 @@ export default function LessonView() {
                     })}
                   </div>
 
+                  {/* Answer feedback — why the correct answer is correct */}
+                  {revealed && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{
+                        padding: '12px 16px', marginBottom: 16,
+                        background: selected === q.correctIndex ? 'rgba(95,255,61,0.05)' : 'rgba(255,102,102,0.05)',
+                        borderLeft: `2px solid ${selected === q.correctIndex ? '#5FFF3D' : '#FF6666'}`,
+                      }}
+                    >
+                      <div style={{
+                        fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.25em',
+                        color: selected === q.correctIndex ? '#5FFF3D' : '#FF6666', marginBottom: 6,
+                      }}>
+                        {selected === q.correctIndex ? '✓ CORRECT' : '✗ NOT QUITE'}
+                      </div>
+                      <p style={{ fontSize: 11, lineHeight: 1.7, color: '#999', fontFamily: 'Inter, sans-serif', margin: 0 }}>
+                        {selected !== q.correctIndex && (
+                          <>The answer is <span style={{ color: '#5FFF3D' }}>{q.options[q.correctIndex]}</span>.{' '}</>
+                        )}
+                        {q.why ?? (selected !== q.correctIndex
+                          ? 'Re-check the key points above — this one is covered there.'
+                          : '')}
+                      </p>
+                    </motion.div>
+                  )}
+
                   {revealed && (
                     <motion.button
                       initial={{ opacity: 0, y: 8 }}
@@ -441,6 +560,11 @@ export default function LessonView() {
                             {!correct && (
                               <div style={{ fontSize: 10, color: '#5FFF3D', marginTop: 3, fontFamily: 'Inter, sans-serif' }}>
                                 Correct: {q.options[q.correctIndex]}
+                              </div>
+                            )}
+                            {!correct && q.why && (
+                              <div style={{ fontSize: 10, color: '#666', marginTop: 3, fontFamily: 'Inter, sans-serif', lineHeight: 1.5 }}>
+                                {q.why}
                               </div>
                             )}
                           </div>
