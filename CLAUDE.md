@@ -70,7 +70,7 @@ src/
     CategoryLegend.tsx        — Zone/category colour legend shown in Dashboard
 
   data/
-    nodes.ts                  — All 59 SkillNode definitions + CATEGORY_COLORS + CATEGORY_GLOW
+    nodes.ts                  — All 65 SkillNode definitions + CATEGORY_COLORS + CATEGORY_GLOW
     lessons.ts                — All lessons (Lesson interface + LESSONS array + LESSONS_BY_NODE lookup)
     skillSprints.ts           — All 35 SkillSprint definitions + CATEGORY_COLOR + SPRINT_CATEGORIES
 
@@ -368,7 +368,7 @@ Background: `#03030A` (near-black, almost pure black with a blue tint). UI surfa
 
 ---
 
-## Canvas Layout — All 59 Nodes
+## Canvas Layout — All 65 Nodes
 
 Canvas dimensions: **4200 × 850 px**. Zone dividers at x: `[430, 810, 1190, 1620, 2160, 2600, 3130, 3650]`.
 
@@ -467,15 +467,15 @@ Canvas dimensions: **4200 × 850 px**. Zone dividers at x: `[430, 810, 1190, 162
 | day_trading_mastery | DAY TRADING *(synergy)* | 180 | risk_management | 4180, 350 |
 | crypto_fundamentals | CRYPTO | 90 | markets_101 | 3760, 590 |
 
-**Total nodes: 59. Dashboard displays `/ 59`.**
+**Total nodes: 65. Dashboard displays `/ 65`.**
 
 ---
 
 ## Lessons — Node Coverage
 
-**All 59 nodes have exactly 5 lessons — 285 lessons total (~930 quiz questions).** Legacy lessons have 3 quiz questions; the new convention (session 8) is **6 questions per quiz, ordered easy→hard, each with a `why` explanation** — `maths_basics` is the flagship example. Expand other nodes to this standard over time. Any quiz size works: the mastery exam draws 10 from whatever pool exists.
+**All 65 nodes have exactly 5 lessons — 315 lessons total (~1,080 quiz questions).** Legacy lessons have 3 quiz questions; the new convention (session 8) is **6 questions per quiz, ordered easy→hard, each with a `why` explanation** — `maths_basics` is the flagship example. Expand other nodes to this standard over time. Any quiz size works: the mastery exam draws 10 from whatever pool exists.
 
-Lesson id prefixes by node (for adding more): str, end (endurance), focus, disc, cons (consistency), learn, save, math, eng, sci, phil, pol, guitar, mtheory, cook, nut, sleep, hiit, res (resilience), mem, ct (critical_thinking), tax, re (real_estate), psych, photo, code, mob (mobility), prob (problem_solving), creat, inv (investing), inc (income_growth), ef (elite_focus), apex, fa (first_aid), ai (ai_literacy), stat (statistics), diy (diy_repairs), behav (behavioural_economics), art (art_history), wh (world_history), ent (entrepreneurship), lang (language_learning), sd (self_defence), cr (crypto_fundamentals), geo (geopolitics), plus full-slug prefixes for economics/culture/trading nodes (e.g. `macro_economics` lessons use ids like `macro-1`... check the file).
+Lesson id prefixes by node (for adding more): str, end (endurance), focus, disc, cons (consistency), learn, save, math, eng, sci, phil, pol, guitar, mtheory, cook, nut, sleep, hiit, res (resilience), mem, ct (critical_thinking), tax, re (real_estate), psych, photo, code, mob (mobility), prob (problem_solving), creat, inv (investing), inc (income_growth), ef (elite_focus), apex, fa (first_aid), ai (ai_literacy), stat (statistics), diy (diy_repairs), behav (behavioural_economics), art (art_history), wh (world_history), ent (entrepreneurship), lang (language_learning), sd (self_defence), cr (crypto_fundamentals), geo (geopolitics), bio (human_biology), mh (mental_health), law (everyday_law), astro (astronomy), enc (energy_climate), mus (music_history), plus full-slug prefixes for economics/culture/trading nodes (e.g. `macro_economics` lessons use ids like `macro-1`... check the file).
 
 ---
 
@@ -583,7 +583,7 @@ AppNav z-index is **300** — higher than all overlays so navigation is always a
 
 ### Add a new node
 1. Add to `NODES` array in `src/data/nodes.ts` with correct zone x-position
-2. Update Dashboard `/ 59` count to reflect new total
+2. Update Dashboard `/ 65` count to reflect new total
 3. Optionally add lessons for it in `src/data/lessons.ts`
 
 ### Add new lessons to an existing node
@@ -664,6 +664,12 @@ Add to `SKILL_SPRINTS` array in `src/data/skillSprints.ts`. Use a unique `id`. N
 - 30 new lessons (total 285, ~930 questions) — ALL new lessons follow the new convention: 5 progressive questions each, every question with `why`
 - 4 new sprints (total 35): body_language, first_5k, declutter_minimalism, personal_brand
 - Dashboard → / 59; economy: content ~14,595 XP vs 15,810 mastery (92%)
+
+### Session 12 (Expansion III)
+- 6 new nodes (total 65): human_biology, mental_health, everyday_law, astronomy, energy_climate, music_history
+- 30 new lessons (total 315, ~1,080 questions) — all with 5 progressive questions + why each
+- Dashboard → / 65; economy re-audited (~92%)
+- NOTE: an errored Edit had corrupted lessons.ts mid-file (truncated bio-1, missing `];`); repaired by replacing the broken fragment through the lookup code with the full lesson set. Always verify `npm run build` after large lesson edits.
 
 ### Session 10 (Accounts + backend)
 - **Supabase backend**: `supabase/schema.sql` (user_state table + RLS), `.env.example`, `.env` gitignored

@@ -15,7 +15,7 @@ There is no social feed, no guilt-trip notifications, and no subscription. Every
 ## Features
 
 ### Skill Tree
-A 4200px wide interactive canvas split into 9 zones — Physical, Mental, Intellectual, Financial, Academic, Craft, Economics, Culture, Trading. 59 skill nodes with prerequisite chains. Click any node to see its description, unlock it with XP, and access its lessons.
+A 4200px wide interactive canvas split into 9 zones — Physical, Mental, Intellectual, Financial, Academic, Craft, Economics, Culture, Trading. 65 skill nodes with prerequisite chains. Click any node to see its description, unlock it with XP, and access its lessons.
 
 ### Lessons
 Each unlocked node has 5 structured lessons. Every lesson includes:
@@ -100,9 +100,9 @@ Full architectural documentation for developers is in `CLAUDE.md`.
 
 | Area | Count |
 |---|---|
-| Skill nodes | 59 (all with lessons) |
-| Total lessons | 285 |
-| Quiz questions | ~930 |
+| Skill nodes | 65 (all with lessons) |
+| Total lessons | 315 |
+| Quiz questions | ~1,080 |
 | SkillSprint plans | 35 |
 
 ---

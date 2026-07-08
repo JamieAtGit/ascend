@@ -540,6 +540,62 @@ export const NODES: SkillNode[] = [
     position: { x: 3760, y: 590 },
   },
 
+  // ── EXPANSION (session 12) ──────────────────────────────────────────────────
+  {
+    id: 'human_biology',
+    name: 'HUMAN BIOLOGY',
+    category: 'PHYSICAL',
+    description: 'Own the manual to your body. Organs, blood, immunity, hormones, and the brain.',
+    xpCost: 80, masteryThreshold: 240,
+    requiredNodes: [],
+    position: { x: 230, y: 670 },
+  },
+  {
+    id: 'mental_health',
+    name: 'MENTAL HEALTH',
+    category: 'MENTAL',
+    description: 'Literacy that saves lives. Anxiety, depression, therapy, and how to help others.',
+    xpCost: 80, masteryThreshold: 240,
+    requiredNodes: [],
+    position: { x: 460, y: 640 },
+  },
+  {
+    id: 'everyday_law',
+    name: 'EVERYDAY LAW',
+    category: 'FINANCIAL',
+    description: 'Know your rights. Contracts, consumer law, tenancy, employment, and dealing with police.',
+    xpCost: 85, masteryThreshold: 255,
+    requiredNodes: [],
+    position: { x: 1540, y: 570 },
+  },
+  {
+    id: 'astronomy',
+    name: 'ASTRONOMY',
+    category: 'ACADEMIC',
+    description: 'The oldest science. Scale of the cosmos, stars, galaxies, and how it all began.',
+    xpCost: 80, masteryThreshold: 240,
+    requiredNodes: ['science_foundations'],
+    position: { x: 2100, y: 640 },
+  },
+  {
+    id: 'energy_climate',
+    name: 'ENERGY & CLIMATE',
+    category: 'ECONOMICS',
+    description: 'The system beneath everything. How energy works, climate science, and the great transition.',
+    xpCost: 90, masteryThreshold: 270,
+    requiredNodes: [],
+    position: { x: 2780, y: 140 },
+  },
+  {
+    id: 'music_history',
+    name: 'MUSIC HISTORY',
+    category: 'CULTURE',
+    description: 'From Bach to hip-hop. How music evolved and how to genuinely listen.',
+    xpCost: 75, masteryThreshold: 225,
+    requiredNodes: [],
+    position: { x: 3520, y: 620 },
+  },
+
   // ── TRADING ─────────────────────────────────────────────────────────────────
   {
     id: 'markets_101',
