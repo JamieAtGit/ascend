@@ -72,6 +72,95 @@ export function useCanvas(initialTransform: Transform) {
     startInertia();
   }, [startInertia]);
 
+  // ── Touch: one-finger pan, two-finger pinch zoom ──────────────────────────
+  // The container gets touchAction: 'none' so the browser never scrolls/zooms
+  // the page — all gestures are ours. Taps on nodes still fire click normally.
+  const touchState = useRef<{
+    mode: 'none' | 'pan' | 'pinch';
+    lastX: number; lastY: number;
+    lastDist: number; lastMidX: number; lastMidY: number;
+  }>({ mode: 'none', lastX: 0, lastY: 0, lastDist: 0, lastMidX: 0, lastMidY: 0 });
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    stopInertia();
+    const ts = touchState.current;
+    if (e.touches.length === 1) {
+      // Starting on a node = potential tap; don't hijack it into a pan yet.
+      if ((e.target as HTMLElement).closest('[data-node]')) { ts.mode = 'none'; return; }
+      ts.mode = 'pan';
+      ts.lastX = e.touches[0].clientX;
+      ts.lastY = e.touches[0].clientY;
+      velocity.current = { x: 0, y: 0 };
+      setIsDragging(true);
+    } else if (e.touches.length >= 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      ts.mode = 'pinch';
+      ts.lastDist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      ts.lastMidX = (a.clientX + b.clientX) / 2;
+      ts.lastMidY = (a.clientY + b.clientY) / 2;
+      setIsDragging(true);
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    const ts = touchState.current;
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (ts.mode === 'pan' && e.touches.length === 1) {
+      const t = e.touches[0];
+      const dx = t.clientX - ts.lastX;
+      const dy = t.clientY - ts.lastY;
+      velocity.current = {
+        x: velocity.current.x * 0.6 + dx * 0.4,
+        y: velocity.current.y * 0.6 + dy * 0.4,
+      };
+      ts.lastX = t.clientX;
+      ts.lastY = t.clientY;
+      setTransform((tr) => ({ ...tr, x: tr.x + dx, y: tr.y + dy }));
+    } else if (ts.mode === 'pinch' && e.touches.length >= 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      const midX = (a.clientX + b.clientX) / 2;
+      const midY = (a.clientY + b.clientY) / 2;
+      const rect = el.getBoundingClientRect();
+      const mx = midX - rect.left;
+      const my = midY - rect.top;
+      const factor = ts.lastDist > 0 ? dist / ts.lastDist : 1;
+      const panDx = midX - ts.lastMidX;
+      const panDy = midY - ts.lastMidY;
+
+      setTransform((tr) => {
+        const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, tr.scale * factor));
+        const ratio = newScale / tr.scale;
+        return {
+          scale: newScale,
+          x: mx - (mx - tr.x) * ratio + panDx,
+          y: my - (my - tr.y) * ratio + panDy,
+        };
+      });
+
+      ts.lastDist = dist;
+      ts.lastMidX = midX;
+      ts.lastMidY = midY;
+    }
+  }, []);
+
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    const ts = touchState.current;
+    if (e.touches.length === 0) {
+      if (ts.mode === 'pan') startInertia();
+      ts.mode = 'none';
+      setIsDragging(false);
+    } else if (e.touches.length === 1 && ts.mode === 'pinch') {
+      // Dropped from pinch to one finger: continue as pan.
+      ts.mode = 'pan';
+      ts.lastX = e.touches[0].clientX;
+      ts.lastY = e.touches[0].clientY;
+      velocity.current = { x: 0, y: 0 };
+    }
+  }, [startInertia]);
+
   // Native non-passive wheel listener so preventDefault() is always respected
   useEffect(() => {
     const el = containerRef.current;
@@ -127,6 +216,9 @@ export function useCanvas(initialTransform: Transform) {
     onMouseDown,
     onMouseMove,
     onMouseUp,
+    onTouchStart,
+    onTouchMove,
+    onTouchEnd,
     // Keep onWheel as a no-op so the JSX prop doesn't break; real handler is the native listener
     onWheel: (e: React.WheelEvent) => e.preventDefault(),
   };

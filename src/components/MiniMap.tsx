@@ -112,6 +112,11 @@ export default function MiniMap({ transform, canvasW, canvasH, onNavigate }: Pro
     onNavigate(newX, newY);
   }, [scaleX, scaleY, transform.scale, onNavigate]);
 
+  // Hidden on phones: it eats a third of the screen and pinch/pan covers navigation
+  if (typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches) {
+    return null;
+  }
+
   return (
     <div style={{
       position: 'fixed',

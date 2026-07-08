@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAscendStore, computeDueLessons } from '../store/useAscendStore';
 import { LESSONS_BY_NODE } from '../data/lessons';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const QUICK_ACTIONS = [
   { label: 'GYM_SESSION', xp: 20, category: 'PHYSICAL' },
@@ -41,6 +42,10 @@ export default function Dashboard() {
   const setActiveLesson = useAscendStore((s) => s.setActiveLesson);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isMobile = useIsMobile();
+  // On phones the icon-only nav spans the full bottom edge — lift the toggle above it
+  const toggleBottom = isMobile ? 88 : 32;
+  const toggleLeft = isMobile ? 12 : 32;
 
   // Today panel: due reviews, next suggested lesson, active sprint
   const dueReviews = useMemo(
@@ -117,7 +122,7 @@ export default function Dashboard() {
   return (
     <>
       {/* Floating XP burst */}
-      <div style={{ position: 'fixed', bottom: 96, left: 56, zIndex: 100, pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', bottom: toggleBottom + 64, left: toggleLeft + 24, zIndex: 100, pointerEvents: 'none' }}>
         <AnimatePresence>
           {floats.map((f) => (
             <motion.div key={f.id}
@@ -147,7 +152,7 @@ export default function Dashboard() {
         whileTap={{ scale: 0.96 }}
         onClick={() => setOpen(!open)}
         style={{
-          position: 'fixed', bottom: 32, left: 32, zIndex: 45,
+          position: 'fixed', bottom: toggleBottom, left: toggleLeft, zIndex: 45,
           width: 44, height: 44,
           border: `1px solid ${open ? 'rgba(136,51,255,0.7)' : 'rgba(136,51,255,0.3)'}`,
           background: open ? 'rgba(136,51,255,0.12)' : 'rgba(4,4,8,0.94)',
@@ -184,8 +189,8 @@ export default function Dashboard() {
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'fixed',
-              bottom: 88, left: 32,
-              width: 300,
+              bottom: toggleBottom + 56, left: toggleLeft,
+              width: 'min(300px, calc(100vw - 24px))',
               maxHeight: '62vh',
               zIndex: 44,
               background: 'rgba(3,3,6,0.98)',

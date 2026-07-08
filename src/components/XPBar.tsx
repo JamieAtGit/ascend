@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useAscendStore, xpForLevel } from '../store/useAscendStore';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export default function XPBar() {
   const xp = useAscendStore((s) => s.xp);
@@ -14,7 +15,8 @@ export default function XPBar() {
   const needed = xpForLevel(level);
   const pct = Math.min(levelXP / needed, 1);
 
-  const segments = 20;
+  const isMobile = useIsMobile();
+  const segments = isMobile ? 12 : 20; // narrower bar fits phone widths
   const filled = Math.round(pct * segments);
 
   return (

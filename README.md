@@ -115,6 +115,21 @@ Dashboard → scroll to DANGER ZONE → confirm twice. This wipes all XP, unlock
 
 Dashboard → DATA BACKUP → EXPORT DATA downloads your full progress as a JSON file. IMPORT DATA restores it. Do this periodically — clearing browser data wipes localStorage and everything with it.
 
+## Accounts & Cloud Sync (optional)
+
+ASCEND supports optional accounts with automatic cloud sync via [Supabase](https://supabase.com) (free tier). When signed in, your full progress syncs to the cloud a few seconds after every change and follows you across devices. The app works 100% locally without an account.
+
+**Setup (~10 minutes, one time):**
+
+1. Create a free project at [supabase.com](https://supabase.com)
+2. In the project's **SQL Editor**, paste and run the contents of `supabase/schema.sql` (creates the `user_state` table with row-level security)
+3. Copy `.env.example` to `.env.local` and fill in your project URL and anon key (Settings → API)
+4. Restart the dev server / rebuild
+
+Then use the **ACCOUNT** tab in the app to create an account or sign in. If a device and the cloud both have progress, the app shows both saves and lets you pick.
+
+Security model: the anon key is safe to ship in frontend code — every row is protected by Postgres row-level security, so users can only ever read/write their own data.
+
 ---
 
 ## License

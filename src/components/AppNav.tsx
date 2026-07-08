@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAscendStore, computeDueLessons } from '../store/useAscendStore';
 import type { OverlayView } from '../store/useAscendStore';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 interface NavItem {
   id: OverlayView | 'tree';
@@ -16,6 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'time', label: 'TIME', icon: '◷' },
   { id: 'stats', label: 'STATS', icon: '▣' },
   { id: 'xpledger', label: 'XP LEDGER', icon: '⊞' },
+  { id: 'account', label: 'ACCOUNT', icon: '⎔' },
 ];
 
 export default function AppNav() {
@@ -24,6 +26,7 @@ export default function AppNav() {
   const activeTimer = useAscendStore((s) => s.activeTimer);
   const completedLessons = useAscendStore((s) => s.completedLessons);
   const reviewStates = useAscendStore((s) => s.reviewStates);
+  const isMobile = useIsMobile();
 
   const dueCount = useMemo(
     () => computeDueLessons(completedLessons, reviewStates).length,
@@ -48,6 +51,7 @@ export default function AppNav() {
       zIndex: 300,
       display: 'flex',
       gap: 1,
+      maxWidth: '100vw',
       background: 'rgba(2,2,5,0.98)',
       border: '1px solid #131313',
       borderBottom: 'none',
@@ -68,9 +72,10 @@ export default function AppNav() {
             key={item.id}
             whileTap={{ scale: 0.96 }}
             onClick={() => handleClick(item.id)}
+            aria-label={item.label}
             style={{
               position: 'relative',
-              padding: '12px 28px 14px',
+              padding: isMobile ? '13px 0 15px' : '12px 28px 14px',
               background: isActive ? 'rgba(136,51,255,0.1)' : 'transparent',
               border: 'none',
               color: isActive ? '#F0F0F0' : '#404040',
@@ -78,7 +83,9 @@ export default function AppNav() {
               transition: 'all 0.18s',
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', gap: 5,
-              minWidth: 80,
+              minWidth: isMobile ? 0 : 80,
+              flex: isMobile ? 1 : undefined,
+              width: isMobile ? `${100 / NAV_ITEMS.length}vw` : undefined,
             }}
             onMouseEnter={(e) => {
               if (!isActive) e.currentTarget.style.color = '#777';
@@ -126,14 +133,17 @@ export default function AppNav() {
               </div>
             )}
 
-            <span style={{ fontSize: 14, lineHeight: 1 }}>{item.icon}</span>
-            <span style={{
-              fontFamily: 'Orbitron, sans-serif',
-              fontSize: 6, letterSpacing: '0.2em',
-              lineHeight: 1,
-            }}>
-              {item.label}
-            </span>
+            <span style={{ fontSize: isMobile ? 17 : 14, lineHeight: 1 }}>{item.icon}</span>
+            {/* Icon-only on mobile — 7 labelled tabs don't fit a phone width */}
+            {!isMobile && (
+              <span style={{
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: 6, letterSpacing: '0.2em',
+                lineHeight: 1,
+              }}>
+                {item.label}
+              </span>
+            )}
           </motion.button>
         );
       })}

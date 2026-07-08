@@ -34,7 +34,7 @@ export interface ActiveTimer {
   label: string;
 }
 
-export type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | 'review' | null;
+export type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | 'review' | 'account' | null;
 
 // Spaced repetition: successful review count (stage) maps to next interval.
 // Unreviewed completed lessons are due 1 day after completion.

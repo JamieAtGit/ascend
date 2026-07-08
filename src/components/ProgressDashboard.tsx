@@ -251,6 +251,7 @@ export default function ProgressDashboard() {
           background: 'rgba(0,0,0,0.88)',
           backdropFilter: 'blur(6px)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 10,
         }}
         onClick={(e) => { if (e.target === e.currentTarget) setOverlay(null); }}
       >

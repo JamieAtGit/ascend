@@ -60,6 +60,7 @@ src/
     XPEditor.tsx              — Dev tool overlay for manually adjusting XP entries
     SkillSprint.tsx           — SkillSprint feature (standalone full-screen overlay): home → plan view → focus mode
     ReviewQueue.tsx           — Spaced repetition overlay (overlay === 'review'): due lessons → quiz from memory → reschedule
+    AccountPanel.tsx          — Account overlay (overlay === 'account'): sign in/up, sync status, conflict resolution
     MasteryExam.tsx           — Full-screen exam (z-index 220): 10 random questions from a node's lessons, 80% to pass
     Landing.tsx               — Landing page shown on first load (view === 'landing')
     CyberSigil.tsx            — Decorative SVG sigil on landing/dashboard
@@ -74,7 +75,12 @@ src/
     skillSprints.ts           — All 35 SkillSprint definitions + CATEGORY_COLOR + SPRINT_CATEGORIES
 
   store/
-    useAscendStore.ts         — Single Zustand store: ALL state and all actions
+    useAscendStore.ts         — Single Zustand store: ALL app state and actions
+    useAuthStore.ts           — Small non-persisted store: auth user, sync status, sync conflict
+
+  lib/
+    supabase.ts               — Supabase client from VITE_SUPABASE_URL/_ANON_KEY env; null when unconfigured
+    sync.ts                   — Cloud sync engine: push/pull the persist blob, conflict detection, auth events
 
   hooks/
     useCanvas.ts              — Pan/zoom hook with inertia. Returns: transform, setTransform, isDragging, containerRef, event handlers
@@ -103,7 +109,30 @@ MasteryExam is NOT mounted in App.tsx — it is rendered by NodePanel when the u
 - All six overlays (LessonView, TimeTracker, ProgressDashboard, XPEditor, SkillSprint, ReviewQueue) are `React.lazy` in App.tsx, wrapped in one `<Suspense fallback={null}>`
 - `skillSprints.ts` (~116KB) is split out of the main bundle. **Do not statically import it from any main-chunk component** — Dashboard fetches the active sprint title via dynamic `import('../data/skillSprints')` in an effect for exactly this reason
 - `lessons.ts` intentionally stays in the main chunk: the store (`investXP` mastery check), NodePanel, and Dashboard need it synchronously at startup — splitting it would require async plumbing for little gain
-- Result: main chunk ~846KB (276KB gzip), sprint data + overlays load on demand
+- Result: main chunk stays lean; sprint data + overlays load on demand
+- `lib/sync.ts` (and with it supabase-js, ~200KB) loads via dynamic import from App's mount effect — NEVER statically import lib/sync or lib/supabase from a main-chunk component. Bonus: with no env vars set, Vite constant-folds the client to null and tree-shakes supabase-js out entirely.
+
+### Mobile Support (session 11)
+
+- **Touch canvas**: `useCanvas` has full touch handlers — one-finger pan (with inertia), two-finger pinch zoom (anchored between fingers), pinch→pan handoff. SkillTree container sets `touchAction: 'none'` so the browser never scrolls the page; taps on `[data-node]` elements are left alone so node clicks work.
+- **`useIsMobile()` hook** (`hooks/useIsMobile.ts`): matchMedia `(max-width: 640px)` — the single breakpoint, matching the CSS media query in index.css.
+- **AppNav on mobile**: icon-only tabs (labels hidden), each tab flex-1 across the full width. Desktop keeps labels.
+- **iOS input zoom**: index.css forces `font-size: 16px !important` on inputs below 640px (inputs under 16px trigger iOS auto-zoom on focus). Inline font sizes on inputs are overridden intentionally.
+- **Centered fixed overlays** (LessonView, Stats, TimeTracker, XPEditor, Account): outer padding 10 so panels never touch screen edges; scrolling bodies need `minHeight: 0` (see session 8 note).
+- **Full-screen flex-centered views** (MasteryExam, Sprint FocusMode): converted to `overflowY: auto` + `margin: auto` centering so long content scrolls instead of clipping. New full-screen views must NOT use plain `alignItems: center` without this pattern.
+- **MiniMap**: returns null below 640px. **Dashboard toggle**: bottom 88 on mobile (above the nav). **XPBar**: 12 segments on mobile vs 20. **NodePanel**: `width: min(340px, calc(100vw - 16px))`.
+
+### Cloud Sync Architecture (session 10)
+
+- **Backend: Supabase** (auth + Postgres). No custom server. Schema in `supabase/schema.sql`: one `user_state` row per user (user_id PK, state jsonb, updated_at), RLS policies restrict every operation to `auth.uid() = user_id`.
+- **Config**: `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` in `.env.local` (see `.env.example`). Unconfigured → `supabase` is null, AccountPanel shows setup instructions, app runs local-only.
+- **Sync model — cloud save-file**: the zustand-persist blob (localStorage `ascend-v2`, shape `{state, version}`) is the unit of sync; same format as Dashboard export/import.
+  - Signed in + any store change → debounced 3s push (string-compare vs last push skips no-ops)
+  - On login: no cloud row → seed from local; local virgin (xp=0, no lessons/time) → adopt cloud silently; both have differing progress → conflict stored in useAuthStore, AccountPanel renders USE CLOUD SAVE / KEEP THIS DEVICE
+  - `applyRemoteState` uses `useAscendStore.setState(parsed.state)`; persist middleware writes localStorage automatically
+  - Sign-out pushes pending changes first, then unsubscribes
+- **useAuthStore** (not persisted): `user`, `syncStatus` (idle/syncing/synced/error), `lastSyncedAt`, `conflict`. Supabase manages its own session in localStorage.
+- **initSync()** is idempotent, called once via dynamic import in App's mount effect; `onAuthStateChange` drives everything.
 ```
 
 All overlays use `position: fixed; inset: 0` and are controlled by `overlay` state in the store.
@@ -228,7 +257,7 @@ day_trading_mastery: peers: ['technical_analysis', 'trading_psychology', 'risk_m
 ### OverlayView Type
 
 ```typescript
-type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | 'review' | null;
+type OverlayView = 'time' | 'stats' | 'xpledger' | 'sprint' | 'review' | 'account' | null;
 ```
 Setting overlay to `null` returns to the skill tree view. `setOverlay(null)` is called when 'tree' nav tab is pressed.
 
@@ -635,3 +664,17 @@ Add to `SKILL_SPRINTS` array in `src/data/skillSprints.ts`. Use a unique `id`. N
 - 30 new lessons (total 285, ~930 questions) — ALL new lessons follow the new convention: 5 progressive questions each, every question with `why`
 - 4 new sprints (total 35): body_language, first_5k, declutter_minimalism, personal_brand
 - Dashboard → / 59; economy: content ~14,595 XP vs 15,810 mastery (92%)
+
+### Session 10 (Accounts + backend)
+- **Supabase backend**: `supabase/schema.sql` (user_state table + RLS), `.env.example`, `.env` gitignored
+- **New files**: `lib/supabase.ts`, `lib/sync.ts`, `store/useAuthStore.ts`, `components/AccountPanel.tsx`
+- **ACCOUNT nav tab** (7 tabs now), `'account'` OverlayView
+- Email/password auth, auto-sync (3s debounce), login pull with virgin-device adoption and two-button conflict resolution
+- Bundle: supabase-js confined to the lazy sync chunk; tree-shaken to zero when env unconfigured
+
+### Session 11 (Mobile support)
+- Touch pan/pinch for the skill tree canvas (was mouse-only — unusable on phones)
+- Icon-only AppNav on mobile (7 labelled tabs overflowed phone widths)
+- iOS input-zoom fix, tap-highlight removal, overlay edge padding, scrollable MasteryExam/FocusMode
+- MiniMap hidden on mobile; Dashboard toggle lifted above nav; XPBar/NodePanel/Dashboard panel responsive widths
+- New: hooks/useIsMobile.ts

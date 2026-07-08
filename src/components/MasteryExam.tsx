@@ -62,8 +62,11 @@ export default function MasteryExam({ node, onClose }: Props) {
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
         background: '#010108',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 24px',
+        display: 'flex', justifyContent: 'center',
+        padding: '64px 20px 40px',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
       }}
     >
       <button onClick={onClose} style={{
@@ -75,7 +78,8 @@ export default function MasteryExam({ node, onClose }: Props) {
         {finished ? 'CLOSE' : 'ABANDON EXAM'}
       </button>
 
-      <div style={{ maxWidth: 620, width: '100%' }}>
+      {/* margin auto = vertically centered when short, scrollable when tall */}
+      <div style={{ maxWidth: 620, width: '100%', margin: 'auto 0' }}>
         {finished ? (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>{passed ? '◈' : '✕'}</div>

@@ -47,6 +47,14 @@ button {
   background: none;
   font-family: inherit;
   color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile: inputs under 16px trigger iOS auto-zoom on focus — override inline styles */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 @keyframes spin {

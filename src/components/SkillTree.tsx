@@ -47,7 +47,7 @@ export default function SkillTree() {
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
 
   const initScale = 0.62;
-  const { transform, setTransform, isDragging, containerRef, onMouseDown, onMouseMove, onMouseUp, onWheel } = useCanvas({
+  const { transform, setTransform, isDragging, containerRef, onMouseDown, onMouseMove, onMouseUp, onTouchStart, onTouchMove, onTouchEnd, onWheel } = useCanvas({
     x: typeof window !== 'undefined' ? (window.innerWidth / 2) - (CANVAS_W * initScale / 2) : 0,
     y: typeof window !== 'undefined' ? (window.innerHeight / 2) - (CANVAS_H * initScale / 2) : 0,
     scale: initScale,
@@ -64,6 +64,9 @@ export default function SkillTree() {
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
       onWheel={onWheel}
       style={{
         width: '100%', height: '100%',
@@ -71,6 +74,8 @@ export default function SkillTree() {
         overflow: 'hidden', position: 'relative',
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none',
+        // Browser handles no gestures here — pan/pinch are ours (mobile)
+        touchAction: 'none',
       }}
     >
       <FilmGrain />

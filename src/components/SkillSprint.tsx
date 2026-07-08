@@ -88,8 +88,11 @@ function FocusMode({
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: '#010108',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '40px 24px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        padding: '64px 20px 40px',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
       }}
     >
       {/* Exit */}
@@ -103,7 +106,7 @@ function FocusMode({
       </button>
 
       {/* Step indicator */}
-      <div style={{ marginBottom: 32, display: 'flex', gap: 6 }}>
+      <div style={{ margin: 'auto 0 32px', display: 'flex', gap: 6, paddingTop: 8 }}>
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div key={i} style={{
             width: i === stepIndex ? 20 : 6, height: 6, borderRadius: 3,
@@ -114,8 +117,8 @@ function FocusMode({
         ))}
       </div>
 
-      {/* Content */}
-      <div style={{ maxWidth: 660, width: '100%', textAlign: 'center' }}>
+      {/* Content — bottom auto margin pairs with indicator's top auto for centering-when-short */}
+      <div style={{ maxWidth: 660, width: '100%', textAlign: 'center', marginBottom: 'auto' }}>
         <div style={{
           fontFamily: 'Orbitron, sans-serif', fontSize: 9, letterSpacing: '0.2em',
           color: sprint.color, marginBottom: 12,

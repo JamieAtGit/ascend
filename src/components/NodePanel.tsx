@@ -76,10 +76,10 @@ export default function NodePanel({ node, onClose }: Props) {
             onAnimationComplete={handleNodeChange}
             style={{
               position: 'fixed',
-              right: 28, top: '50%',
+              right: 'min(28px, 2vw)', top: '50%',
               transform: 'translateY(-50%)',
-              width: 340, zIndex: 60,
-              maxHeight: '90vh',
+              width: 'min(340px, calc(100vw - 16px))', zIndex: 60,
+              maxHeight: '86vh',
               background: 'rgba(4,4,7,0.99)',
               backdropFilter: 'blur(24px)',
               overflow: 'hidden',
