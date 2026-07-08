@@ -3,7 +3,7 @@ import { useAscendStore } from './store/useAscendStore';
 import Landing from './components/Landing';
 import SkillTree from './components/SkillTree';
 
-// Overlays are code-split: they load on demand, keeping the main bundle
+// Overlays are code-split: they load on demand, keeping the main bundle .
 // (canvas + store + lesson data) as small as possible.
 const LessonView = lazy(() => import('./components/LessonView'));
 const TimeTracker = lazy(() => import('./components/TimeTracker'));
