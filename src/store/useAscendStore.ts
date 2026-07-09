@@ -154,6 +154,70 @@ const SYNERGY_MAP: Record<string, { peers: string[]; bonus: number }> = {
   day_trading_mastery: { peers: ['technical_analysis', 'trading_psychology', 'risk_management'], bonus: 0.12 },
 };
 
+// ─── Persistence: versioning + defensive coercion ─────────────────────────────
+// Bump PERSIST_VERSION whenever a persisted field changes shape/meaning, and add
+// a case in migrateState. Existing users (no version = 0) run migrate once.
+export const PERSIST_VERSION = 1;
+
+// The single source of truth for persisted shape + defaults. Every persisted
+// field must appear here so new fields always get a value on old saves.
+function persistedDefaults() {
+  return {
+    xp: 0,
+    level: 1,
+    spentXP: {} as Record<string, number>,
+    unlockedNodes: [] as string[],
+    masteredNodes: [] as string[],
+    xpHistory: [] as XPEntry[],
+    completedLessons: [] as LessonCompletion[],
+    timeEntries: [] as TimeEntry[],
+    currentStreak: 0,
+    lastActiveDate: null as string | null,
+    completedSprints: [] as string[],
+    sprintProgress: {} as Record<string, string[]>,
+    reviewStates: {} as Record<string, ReviewState>,
+    passedExams: [] as string[],
+  };
+}
+
+// Coerce arbitrary (possibly corrupt/partial/old) persisted data into a valid
+// shape. Missing fields get defaults; wrong types are replaced, not trusted.
+// This is what protects saved progress across schema changes and corruption.
+function coercePersisted(raw: unknown): ReturnType<typeof persistedDefaults> {
+  const d = persistedDefaults();
+  if (!raw || typeof raw !== 'object') return d;
+  const r = raw as Record<string, unknown>;
+  const num = (v: unknown, f: number) => (typeof v === 'number' && isFinite(v) ? v : f);
+  const anyArr = <T,>(v: unknown) => (Array.isArray(v) ? (v as T[]) : []);
+  const strArr = (v: unknown) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string') as string[] : []);
+  const rec = <T,>(v: unknown) =>
+    v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, T>) : {};
+  return {
+    xp: num(r.xp, 0),
+    level: num(r.level, 1),
+    spentXP: rec<number>(r.spentXP),
+    unlockedNodes: strArr(r.unlockedNodes),
+    masteredNodes: strArr(r.masteredNodes),
+    xpHistory: anyArr<XPEntry>(r.xpHistory),
+    completedLessons: anyArr<LessonCompletion>(r.completedLessons),
+    timeEntries: anyArr<TimeEntry>(r.timeEntries),
+    currentStreak: num(r.currentStreak, 0),
+    lastActiveDate: typeof r.lastActiveDate === 'string' ? r.lastActiveDate : null,
+    completedSprints: strArr(r.completedSprints),
+    sprintProgress: rec<string[]>(r.sprintProgress),
+    reviewStates: rec<ReviewState>(r.reviewStates),
+    passedExams: strArr(r.passedExams),
+  };
+}
+
+// Runs on load when the stored version < PERSIST_VERSION. Transform old shapes
+// here per version; coercion at the end guarantees a valid result regardless.
+function migrateState(persisted: unknown, _fromVersion: number): ReturnType<typeof persistedDefaults> {
+  // v0 → v1: legacy saves had no version field; only new fields were added over
+  // time, so coercion (defaults for anything missing) is a safe upgrade.
+  return coercePersisted(persisted);
+}
+
 export const useAscendStore = create<AscendState>()(
   persist(
     (set, get) => ({
@@ -432,6 +496,7 @@ export const useAscendStore = create<AscendState>()(
     }),
     {
       name: 'ascend-v2',
+      version: PERSIST_VERSION,
       partialize: (state) => ({
         xp: state.xp,
         level: state.level,
@@ -448,6 +513,15 @@ export const useAscendStore = create<AscendState>()(
         reviewStates: state.reviewStates,
         passedExams: state.passedExams,
       }),
+      // Runs when stored version < PERSIST_VERSION; upgrades + sanitises old data.
+      migrate: (persisted, fromVersion) => migrateState(persisted, fromVersion),
+      // Deep-safe merge: start from the live store (actions + defaults), overlay
+      // coerced persisted data so missing/corrupt fields always fall back cleanly.
+      merge: (persisted, current) => ({ ...current, ...coercePersisted(persisted) }),
+      // Surface (rather than swallow) storage/parse failures for debugging.
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) console.error('[ascend] failed to rehydrate saved progress:', error);
+      },
     }
   )
 );

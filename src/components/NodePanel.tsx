@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { SkillNode } from '../data/nodes';
 import { CATEGORY_COLORS, CATEGORY_GLOW } from '../data/nodes';
 import { useAscendStore } from '../store/useAscendStore';
-import { LESSONS_BY_NODE } from '../data/lessons';
-import type { Difficulty } from '../data/lessons';
+import { LESSONS_BY_NODE, TIER_ORDER, TIER_META, lessonTier } from '../data/lessons';
+import type { Difficulty, Lesson } from '../data/lessons';
 import MasteryExam from './MasteryExam';
 
 interface Props {
@@ -48,7 +48,66 @@ export default function NodePanel({ node, onClose }: Props) {
   const allLessonsDone = lessons.length > 0 && lessonsDone === lessons.length;
   const examPassed = node ? passedExams.includes(node.id) : false;
 
+  // Group lessons by academic tier. If a node's lessons span more than one tier
+  // (e.g. Mathematics: Foundation→Degree), render the ladder with tier headers;
+  // single-tier nodes render flat, unchanged.
+  const tierGroups = TIER_ORDER
+    .map((tier) => ({ tier, items: lessons.filter((l) => lessonTier(l) === tier) }))
+    .filter((g) => g.items.length > 0);
+  const isTiered = tierGroups.length > 1;
+
   const handleNodeChange = () => setTab('info');
+
+  // One lesson row — reused by both the flat and tier-grouped layouts.
+  const renderLessonBtn = (lesson: Lesson, displayNum: number) => {
+    const done = completedSet.has(lesson.id);
+    const dc = DIFF_COLOR[lesson.difficulty];
+    return (
+      <motion.button
+        key={lesson.id}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={(e) => { e.stopPropagation(); setActiveLesson(lesson.id); }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '11px 12px',
+          background: done ? `${color}05` : '#08080f',
+          border: `1px solid ${done ? color + '20' : '#181820'}`,
+          cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = color + '45';
+          e.currentTarget.style.background = `${color}0c`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = done ? color + '20' : '#181820';
+          e.currentTarget.style.background = done ? `${color}05` : '#08080f';
+        }}
+      >
+        <div style={{
+          width: 22, height: 22, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: done ? '#5FFF3D12' : '#0e0e18',
+          border: `1px solid ${done ? '#5FFF3D30' : '#1e1e2a'}`,
+        }}>
+          {done
+            ? <span style={{ color: '#5FFF3D', fontSize: 11 }}>✓</span>
+            : <span style={{ color: '#333', fontSize: 8, fontFamily: 'Orbitron, sans-serif' }}>{String(displayNum).padStart(2, '0')}</span>}
+        </div>
+        <span style={{ flex: 1, fontSize: 11, lineHeight: 1.35, color: done ? '#4a4a4a' : '#9090a8', fontFamily: 'Inter, sans-serif' }}>
+          {lesson.title}
+        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+          <span style={{ fontSize: 7, color: dc, fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.1em' }}>
+            {lesson.difficulty}
+          </span>
+          <span style={{ fontSize: 8, color: done ? '#2a4a2a' : '#5FFF3D', fontFamily: 'Orbitron, sans-serif', fontWeight: 700 }}>
+            +{lesson.xpReward}
+          </span>
+        </div>
+      </motion.button>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -349,72 +408,39 @@ export default function NodePanel({ node, onClose }: Props) {
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                          {lessons.map((lesson, i) => {
-                            const done = completedSet.has(lesson.id);
-                            const dc = DIFF_COLOR[lesson.difficulty];
-                            return (
-                              <motion.button
-                                key={lesson.id}
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveLesson(lesson.id);
-                                }}
-                                style={{
-                                  display: 'flex', alignItems: 'center', gap: 10,
-                                  padding: '11px 12px',
-                                  background: done ? `${color}05` : '#08080f',
-                                  border: `1px solid ${done ? color + '20' : '#181820'}`,
-                                  cursor: 'pointer', textAlign: 'left',
-                                  transition: 'all 0.15s',
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = color + '45';
-                                  e.currentTarget.style.background = `${color}0c`;
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = done ? color + '20' : '#181820';
-                                  e.currentTarget.style.background = done ? `${color}05` : '#08080f';
-                                }}
-                              >
-                                {/* Order number or done indicator */}
-                                <div style={{
-                                  width: 22, height: 22, flexShrink: 0,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  background: done ? '#5FFF3D12' : '#0e0e18',
-                                  border: `1px solid ${done ? '#5FFF3D30' : '#1e1e2a'}`,
-                                }}>
-                                  {done ? (
-                                    <span style={{ color: '#5FFF3D', fontSize: 11 }}>✓</span>
-                                  ) : (
-                                    <span style={{ color: '#333', fontSize: 8, fontFamily: 'Orbitron, sans-serif' }}>
-                                      {String(i + 1).padStart(2, '0')}
+                        {isTiered ? (
+                          /* Academic ladder: grouped by tier with headers */
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                            {(() => { let n = 0; return tierGroups.map((g) => {
+                              const meta = TIER_META[g.tier];
+                              const groupDone = g.items.filter((l) => completedSet.has(l.id)).length;
+                              return (
+                                <div key={g.tier}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                    <span style={{
+                                      fontFamily: 'Orbitron, sans-serif', fontSize: 8, letterSpacing: '0.2em',
+                                      color: meta.color, padding: '2px 7px', border: `1px solid ${meta.color}40`,
+                                      background: `${meta.color}0c`,
+                                    }}>
+                                      {meta.label}
                                     </span>
-                                  )}
+                                    <span style={{ flex: 1, height: 1, background: `${meta.color}18` }} />
+                                    <span style={{ fontFamily: 'Orbitron, sans-serif', fontSize: 7, color: '#444' }}>
+                                      {groupDone}/{g.items.length}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                    {g.items.map((lesson) => { n += 1; return renderLessonBtn(lesson, n); })}
+                                  </div>
                                 </div>
-
-                                <span style={{
-                                  flex: 1, fontSize: 11, lineHeight: 1.35,
-                                  color: done ? '#4a4a4a' : '#9090a8',
-                                  fontFamily: 'Inter, sans-serif',
-                                }}>
-                                  {lesson.title}
-                                </span>
-
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-                                  <span style={{ fontSize: 7, color: dc, fontFamily: 'Orbitron, sans-serif', letterSpacing: '0.1em' }}>
-                                    {lesson.difficulty}
-                                  </span>
-                                  <span style={{ fontSize: 8, color: done ? '#2a4a2a' : '#5FFF3D', fontFamily: 'Orbitron, sans-serif', fontWeight: 700 }}>
-                                    +{lesson.xpReward}
-                                  </span>
-                                </div>
-                              </motion.button>
-                            );
-                          })}
-                        </div>
+                              );
+                            }); })()}
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {lessons.map((lesson, i) => renderLessonBtn(lesson, i + 1))}
+                          </div>
+                        )}
 
                         {/* Mastery exam — unlocks when all lessons are done */}
                         <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid #111' }}>

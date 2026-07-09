@@ -1,0 +1,25 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Pin Node so Netlify's default doesn't break the Vite 8 build (needs Node 20.19+).
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA fallback: serve index.html for any non-file route.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Hashed build assets are immutable — cache them hard.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# The service worker must never be stale-cached, or updates won't roll out.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

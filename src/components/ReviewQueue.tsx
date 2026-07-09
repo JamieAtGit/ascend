@@ -4,6 +4,7 @@ import { useAscendStore, computeDueLessons, REVIEW_INTERVALS_DAYS } from '../sto
 import { LESSON_BY_ID } from '../data/lessons';
 import type { Lesson } from '../data/lessons';
 import { NODES, CATEGORY_COLORS } from '../data/nodes';
+import { shuffleQuestion } from '../lib/shuffleQuiz';
 
 function nodeColor(nodeId: string): string {
   const node = NODES.find((n) => n.id === nodeId);
@@ -21,9 +22,15 @@ function ReviewSession({ lesson, onDone }: { lesson: Lesson; onDone: (allCorrect
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
 
+  // Options shuffled so the answer position isn't predictable; stable per review.
+  const quiz = useMemo(
+    () => lesson.quiz.map((q, i) => shuffleQuestion(q, `review:${lesson.id}:${i}`)),
+    [lesson.id],
+  );
+
   const color = nodeColor(lesson.nodeId);
-  const question = lesson.quiz[qIndex];
-  const isLast = qIndex === lesson.quiz.length - 1;
+  const question = quiz[qIndex];
+  const isLast = qIndex === quiz.length - 1;
 
   const handleConfirm = () => {
     if (selected === null) return;
@@ -33,7 +40,7 @@ function ReviewSession({ lesson, onDone }: { lesson: Lesson; onDone: (allCorrect
   const handleNext = () => {
     const newAnswers = [...answers, selected!];
     if (isLast) {
-      const allCorrect = newAnswers.every((a, i) => a === lesson.quiz[i].correctIndex);
+      const allCorrect = newAnswers.every((a, i) => a === quiz[i].correctIndex);
       onDone(allCorrect);
     } else {
       setAnswers(newAnswers);

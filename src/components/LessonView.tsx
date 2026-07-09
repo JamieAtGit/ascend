@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAscendStore } from '../store/useAscendStore';
-import { LESSONS } from '../data/lessons';
+import { LESSONS, TIER_META, lessonTier } from '../data/lessons';
+import { shuffleQuestion } from '../lib/shuffleQuiz';
 
 type Phase = 'content' | 'quiz' | 'result';
 
@@ -24,6 +25,16 @@ export default function LessonView() {
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [warmupPick, setWarmupPick] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState(0); // bumped on retry so options reshuffle
+
+  // Options are shuffled (correctIndex remapped) so the answer position isn't
+  // predictable. Rebuilt per lesson and per attempt; stable across re-renders.
+  const quiz = useMemo(
+    () => (lesson ? lesson.quiz.map((q) => shuffleQuestion(q, `${lesson.id}:${attempt}`)) : []),
+    [lesson?.id, attempt],
+  );
+  // Warm-up uses the first question's shuffled form so it matches the later quiz.
+  const warmupQ = quiz[0];
 
   // Auto time-tracking: start a Learning timer when a lesson opens (unless one is
   // already running), stop it when the lesson closes. Time XP accrues automatically.
@@ -53,6 +64,7 @@ export default function LessonView() {
     setSelected(null);
     setRevealed(false);
     setWarmupPick(null);
+    setAttempt((a) => a + 1); // reshuffle options on retry
   };
 
   const close = () => {
@@ -62,8 +74,8 @@ export default function LessonView() {
 
   if (!lesson) return null;
 
-  const totalQ = lesson.quiz.length;
-  const correctCount = lesson.quiz.filter((q, i) => answers[i] === q.correctIndex).length;
+  const totalQ = quiz.length;
+  const correctCount = quiz.filter((q, i) => answers[i] === q.correctIndex).length;
   const passed = correctCount / totalQ >= 0.6;
 
   const handleAnswer = (optIndex: number) => {
@@ -91,7 +103,7 @@ export default function LessonView() {
     close();
   };
 
-  const q = lesson.quiz[qIndex];
+  const q = quiz[qIndex];
   const diffColor = DIFF_COLOR[lesson.difficulty];
 
   return (
@@ -137,7 +149,18 @@ export default function LessonView() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                  {/* Academic tier badge — only shown for tiered (academic) nodes */}
+                  {lesson.tier && (
+                    <span style={{
+                      fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.25em',
+                      color: TIER_META[lessonTier(lesson)].color, padding: '3px 8px',
+                      border: `1px solid ${TIER_META[lessonTier(lesson)].color}45`,
+                      background: `${TIER_META[lessonTier(lesson)].color}0c`,
+                    }}>
+                      {TIER_META[lessonTier(lesson)].label}
+                    </span>
+                  )}
                   <span style={{
                     fontFamily: 'Orbitron, sans-serif', fontSize: 7, letterSpacing: '0.3em',
                     color: diffColor, padding: '3px 8px',
@@ -238,7 +261,7 @@ export default function LessonView() {
 
                   {/* Warm-up prediction — unscored active recall before reading.
                       Guessing first (even wrongly) measurably improves retention. */}
-                  {lesson.quiz.length > 0 && (
+                  {warmupQ && (
                     <div style={{
                       padding: '14px 16px', marginBottom: 22,
                       background: '#08080f', border: '1px solid #1a1a2a',
@@ -253,12 +276,12 @@ export default function LessonView() {
                         fontSize: 12, lineHeight: 1.6, color: '#B0B0B0',
                         fontFamily: 'Inter, sans-serif', margin: '0 0 10px', fontWeight: 500,
                       }}>
-                        {lesson.quiz[0].question}
+                        {warmupQ.question}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {lesson.quiz[0].options.map((opt, i) => {
+                        {warmupQ.options.map((opt, i) => {
                           const picked = warmupPick === i;
-                          const isCorrect = i === lesson.quiz[0].correctIndex;
+                          const isCorrect = i === warmupQ.correctIndex;
                           const revealedWarmup = warmupPick !== null;
                           let color = '#555', border = '#15151f';
                           if (revealedWarmup) {
@@ -286,9 +309,9 @@ export default function LessonView() {
                       {warmupPick !== null && (
                         <div style={{
                           marginTop: 10, fontSize: 10, fontFamily: 'Inter, sans-serif',
-                          color: warmupPick === lesson.quiz[0].correctIndex ? '#5FFF3D' : '#FFA333',
+                          color: warmupPick === warmupQ.correctIndex ? '#5FFF3D' : '#FFA333',
                         }}>
-                          {warmupPick === lesson.quiz[0].correctIndex
+                          {warmupPick === warmupQ.correctIndex
                             ? 'Good instinct — now read to understand why.'
                             : 'Wrong guesses prime memory better than no guess — the answer is below.'}
                         </div>
@@ -541,7 +564,7 @@ export default function LessonView() {
                     display: 'flex', flexDirection: 'column', gap: 8,
                     marginBottom: 28, textAlign: 'left',
                   }}>
-                    {lesson.quiz.map((q, i) => {
+                    {quiz.map((q, i) => {
                       const correct = answers[i] === q.correctIndex;
                       return (
                         <div key={i} style={{

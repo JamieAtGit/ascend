@@ -305,6 +305,10 @@ interface QuizQuestion {
   why?: string;            // shown after answering — explains the correct answer.
                            // Present on maths_basics (flagship); add to all new/expanded quizzes.
 }
+
+type LessonTier = 'foundation' | 'gcse' | 'alevel' | 'degree';  // UK academic ladder
+// Lesson.tier?: LessonTier — absent = 'foundation'. Exports: TIER_ORDER, TIER_META
+// (label/short/color per tier), lessonTier(l) helper.
 ```
 
 `LESSONS_BY_NODE` is a pre-built lookup: `Record<string, Lesson[]>` where lessons are sorted by `order`.
@@ -659,6 +663,14 @@ Add to `SKILL_SPRINTS` array in `src/data/skillSprints.ts`. Use a unique `id`. N
 - **Time XP rebalanced**: divisor /10 → /4 (Learning ≈ 1 XP/min); TimeTracker display math updated in 2 places
 - **Quiz depth (flagship)**: maths_basics expanded to 6 questions per lesson, easy→hard, all with why (30 questions, was 15). This is the template for progressively deepening every node.
 
+### Academic Tier System (session 13)
+
+- **`tier?: LessonTier`** on Lesson: `'foundation' | 'gcse' | 'alevel' | 'degree'` (UK ladder). Absent = foundation. `lessonTier(l)` resolves it; `TIER_ORDER` and `TIER_META` (label + colour per tier) exported from lessons.ts.
+- **NodePanel UI**: `tierGroups` partitions a node's lessons by tier. If >1 tier present (`isTiered`), the lessons tab renders the **academic ladder** — tier headers (FOUNDATION green / GCSE cyan / A-LEVEL orange / DEGREE pink) with per-tier progress, continuous lesson numbering. Single-tier nodes render flat, unchanged. The lesson button is extracted to `renderLessonBtn(lesson, displayNum)`.
+- **LessonView**: shows the tier badge in the header (only when `lesson.tier` is set).
+- **FLAGSHIP: Mathematics** is the complete four-tier ladder — Foundation (math-1,2), GCSE (math-3,4,5,6,7), A-Level (math-8 differentiation, 9 integration, 10 sequences/series/functions), Degree (math-11 proof/logic, 12 linear algebra, 13 limits/analysis). 13 lessons, ~65 questions.
+- **ROLLOUT PLAN** — extend the ladder to these applicable academic nodes (skill/practice nodes like strength/discipline/guitar stay flat, untiered): maths_basics ✅, science_foundations ✅, human_biology ✅, world_history ✅, philosophy ✅, psychology ✅ (all 10-lesson 4-tier ladders); then statistics, english_writing, economics nodes, astronomy, energy_climate, ancient_philosophy, classical_literature, geography-type nodes. Pattern per node: tag existing 5 lessons with tiers, then ADD A-Level and Degree lessons (5 Q each, all with `why`). Verify with `npm run build` after each — lessons.ts is large and past edits have corrupted it mid-file.
+
 ### Session 9 (Rounded-person expansion II)
 - 6 new nodes (total 59): self_defence, language_learning, entrepreneurship, world_history, geopolitics, crypto_fundamentals
 - 30 new lessons (total 285, ~930 questions) — ALL new lessons follow the new convention: 5 progressive questions each, every question with `why`
@@ -670,6 +682,39 @@ Add to `SKILL_SPRINTS` array in `src/data/skillSprints.ts`. Use a unique `id`. N
 - 30 new lessons (total 315, ~1,080 questions) — all with 5 progressive questions + why each
 - Dashboard → / 65; economy re-audited (~92%)
 - NOTE: an errored Edit had corrupted lessons.ts mid-file (truncated bio-1, missing `];`); repaired by replacing the broken fragment through the lookup code with the full lesson set. Always verify `npm run build` after large lesson edits.
+
+### Session 13 (Academic tier system + Maths ladder)
+- Added `tier` to Lesson (foundation/gcse/alevel/degree) + TIER_META/TIER_ORDER/lessonTier
+- NodePanel groups tiered nodes into an academic-ladder UI (headers + per-tier progress); LessonView shows a tier badge
+- Mathematics built into a full 4-tier ladder: 8 new lessons (math-6..13) through GCSE→A-Level→Degree (differentiation, integration, series, proof, linear algebra, analysis). Total lessons 323, ~1,120 questions
+- Rollout plan documented for remaining academic nodes (see Academic Tier System section)
+
+### Session 14 (Science ladders)
+- science_foundations → full ladder (sci-6..10: electricity, bonding, genetics/evolution [A-Level], quantum/relativity, thermodynamics [Degree])
+- human_biology → full ladder (bio-6..10: genetics, evolution, enzymes [A-Level], molecular biology, homeostasis [Degree])
+- Total lessons 333, ~1,170 questions
+
+### Session 18 (PWA + deploy)
+- `vite-plugin-pwa` added: manifest, service worker (Workbox, autoUpdate), full offline precache (~1.6 MiB), Google Fonts runtime-cached. Config in vite.config.ts.
+- Icons: `scripts/icon-source.svg` → PNGs via `scripts/gen-icons.mjs` (`npm run gen-icons`, uses sharp devDep) → public/pwa-192, pwa-512 (+maskable), apple-touch-icon(180). index.html has iOS meta tags (apple-mobile-web-app-*, theme-color, viewport-fit=cover).
+- Deploy configs: `vercel.json` + `netlify.toml` (build npm run build, output dist, SPA rewrites, immutable asset caching, no-cache on sw.js). README has install + deploy instructions.
+- Not yet deployed to a live host (needs user's Vercel/Netlify account); everything is deploy-ready and verified via `npm run preview`.
+
+### Session 17 (Store versioning + migrations)
+- persist config now has `version: PERSIST_VERSION` (1), `migrate`, defensive `merge`, and `onRehydrateStorage` error logging
+- `persistedDefaults()` is the single source of truth for persisted shape; `coercePersisted(raw)` heals partial/corrupt/legacy saves (missing fields → defaults, wrong types → replaced) without losing valid progress; `migrateState(persisted, fromVersion)` handles version upgrades
+- **When you change a persisted field's shape/meaning**: bump PERSIST_VERSION and add a case in migrateState BEFORE the final coerce. Adding a new field only needs it added to persistedDefaults() + coercePersisted() + partialize.
+- Verified: legacy saves preserve xp/streak/progress and default new fields; corrupt/garbage data heals to a valid shape; valid saves round-trip unchanged
+
+### Session 16 (Quiz-integrity fix)
+- **Answer-position leak fixed**: authored quizzes had ~80% of correct answers at index 1, so "always pick B" scored 80%. New `lib/shuffleQuiz.ts` (`shuffleQuestion(q, salt)`) shuffles options with a seeded PRNG and remaps correctIndex + keeps `why` attached. Applied in LessonView (memoized per lesson+attempt; warm-up + results use the shuffled quiz), MasteryExam (each drawn question shuffled), ReviewQueue (shuffled per review). Correct-answer position now ~25% each.
+- IMPORTANT: authored data still has the skew — never rely on correctIndex position; always render through shuffleQuestion. When writing new questions, position doesn't matter (shuffled at render), but vary it anyway for safety.
+
+### Session 15 (Humanities ladders)
+- world_history → ladder (wh-6..10): sources, causation, interpretations [A-Level]; historiography, discipline/method [Degree] — shifts from what-happened to how-we-know
+- philosophy → ladder (phil-6..10): metaphysics, political philosophy, philosophy of religion [A-Level]; philosophy of mind/consciousness, metaethics/traditions [Degree]
+- psychology → ladder (psych-6..10): research methods, memory, approaches [A-Level]; biopsychology, statistics/replication crisis [Degree]
+- Total lessons 348, ~1,245 questions; 63 tiered lessons across 6 nodes
 
 ### Session 10 (Accounts + backend)
 - **Supabase backend**: `supabase/schema.sql` (user_state table + RLS), `.env.example`, `.env` gitignored

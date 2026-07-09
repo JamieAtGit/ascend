@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8833FF"/>
+      <stop offset="0.55" stop-color="#33F3FF"/>
+      <stop offset="1" stop-color="#5FFF3D"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#8833FF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#8833FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Full-bleed dark background (safe as a maskable icon) -->
+  <rect width="512" height="512" fill="#03030A"/>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <!-- Ascend chevrons (upward motion), kept within the maskable safe zone -->
+  <g stroke="url(#g)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M150 300 L256 194 L362 300"/>
+    <path d="M150 232 L256 126 L362 232" opacity="0.55"/>
+    <path d="M150 368 L256 262 L362 368" opacity="0.28"/>
+  </g>
+  <!-- Baseline tick -->
+  <rect x="196" y="392" width="120" height="10" rx="5" fill="url(#g)" opacity="0.8"/>
+</svg>

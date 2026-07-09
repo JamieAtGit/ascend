@@ -5,6 +5,7 @@ import { CATEGORY_COLORS } from '../data/nodes';
 import { LESSONS_BY_NODE } from '../data/lessons';
 import type { QuizQuestion } from '../data/lessons';
 import { useAscendStore } from '../store/useAscendStore';
+import { shuffleQuestion } from '../lib/shuffleQuiz';
 
 const EXAM_SIZE = 10;
 const PASS_THRESHOLD = 0.8;
@@ -17,7 +18,8 @@ function drawQuestions(nodeId: string): QuizQuestion[] {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return shuffled.slice(0, EXAM_SIZE);
+  // Also shuffle each question's OPTIONS so the answer position isn't predictable.
+  return shuffled.slice(0, EXAM_SIZE).map((q, i) => shuffleQuestion(q, `exam:${i}:${Math.random()}`));
 }
 
 interface Props {

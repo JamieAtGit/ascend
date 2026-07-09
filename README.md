@@ -27,6 +27,8 @@ Each unlocked node has 5 structured lessons. Every lesson includes:
 
 Difficulty: easy / medium / hard. XP rewards scale accordingly.
 
+**Academic ladder:** knowledge subjects progress through UK education tiers — Foundation → GCSE → A-Level → Degree. Six subjects are complete four-tier ladders — Mathematics, Science, Human Biology, World History, Philosophy, and Psychology — spanning from foundational basics up to genuine university-level material (real analysis, quantum mechanics, gene expression, historiography, the hard problem of consciousness, the replication crisis). The lessons tab groups these into a visible ladder. Other academic subjects are being extended to the same structure.
+
 ### Spaced Repetition Review
 Every completed lesson enters a review schedule (1 → 3 → 7 → 21 → 60 days). The REVIEW tab shows what's due; answer the lesson's quiz from memory — pass and it returns later, fail and it comes back tomorrow. This is how the app makes knowledge permanent instead of forgotten. A badge on the nav shows your due count.
 
@@ -101,8 +103,8 @@ Full architectural documentation for developers is in `CLAUDE.md`.
 | Area | Count |
 |---|---|
 | Skill nodes | 65 (all with lessons) |
-| Total lessons | 315 |
-| Quiz questions | ~1,080 |
+| Total lessons | 348 |
+| Quiz questions | ~1,245 |
 | SkillSprint plans | 35 |
 
 ---
@@ -129,6 +131,29 @@ ASCEND supports optional accounts with automatic cloud sync via [Supabase](https
 Then use the **ACCOUNT** tab in the app to create an account or sign in. If a device and the cloud both have progress, the app shows both saves and lets you pick.
 
 Security model: the anon key is safe to ship in frontend code — every row is protected by Postgres row-level security, so users can only ever read/write their own data.
+
+---
+
+## Install as an App (PWA)
+
+ASCEND is a Progressive Web App — it installs to your phone or desktop like a native app and works fully offline (all lessons and progress are cached; no connection needed once loaded).
+
+- **iPhone/iPad (Safari):** open the site → Share → **Add to Home Screen**.
+- **Android (Chrome):** open the site → menu → **Install app** (or the install prompt).
+- **Desktop (Chrome/Edge):** click the **install icon** in the address bar.
+
+The launched app runs full-screen with its own icon, and new deploys update the service worker automatically.
+
+Icons are generated from `scripts/icon-source.svg` via `npm run gen-icons` (needs the `sharp` devDependency) into `public/`.
+
+## Deploying
+
+The app is a static site — any static host works. Config files are included for the two easiest:
+
+- **Vercel:** `vercel.json` is present (build `npm run build`, output `dist`, SPA rewrites, asset caching). Run `npx vercel` or connect the repo at [vercel.com](https://vercel.com).
+- **Netlify:** `netlify.toml` is present (same settings). Run `npx netlify deploy --prod` or connect the repo at [netlify.com](https://netlify.com).
+
+Both are free for this. If you use cloud sync, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables in the host's dashboard (same values as `.env.local`). A valid HTTPS origin is required for the service worker and installability — both hosts provide one automatically.
 
 ---
 

@@ -1,5 +1,19 @@
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
+// Academic ladder (UK). Applicable knowledge nodes progress through these tiers;
+// skill/practice nodes (strength, discipline, guitar…) leave tier undefined and
+// render as a flat list. Lessons without a tier are treated as 'foundation'.
+export type LessonTier = 'foundation' | 'gcse' | 'alevel' | 'degree';
+
+export const TIER_ORDER: LessonTier[] = ['foundation', 'gcse', 'alevel', 'degree'];
+
+export const TIER_META: Record<LessonTier, { label: string; short: string; color: string }> = {
+  foundation: { label: 'FOUNDATION', short: 'BASICS', color: '#5FFF3D' },
+  gcse: { label: 'GCSE LEVEL', short: 'GCSE', color: '#33F3FF' },
+  alevel: { label: 'A-LEVEL', short: 'A-LEVEL', color: '#FFA333' },
+  degree: { label: 'DEGREE LEVEL', short: 'DEGREE', color: '#FF5592' },
+};
+
 export interface QuizQuestion {
   id: string;
   question: string;
@@ -15,6 +29,7 @@ export interface Lesson {
   title: string;
   xpReward: number;
   difficulty: Difficulty;
+  tier?: LessonTier; // academic level; absent = 'foundation'
   whyItMatters?: string;
   explanation: string;
   bullets: string[];
@@ -22,11 +37,17 @@ export interface Lesson {
   quiz: QuizQuestion[];
 }
 
+// Resolve a lesson's tier, defaulting untagged lessons to foundation.
+export function lessonTier(l: Lesson): LessonTier {
+  return l.tier ?? 'foundation';
+}
+
 export const LESSONS: Lesson[] = [
   // ── MATHS BASICS ──────────────────────────────────────────────────────────
   {
     id: 'math-1', nodeId: 'maths_basics', order: 1, title: 'Numbers & The Number Line',
     xpReward: 20, difficulty: 'easy',
+    tier: 'foundation',
     explanation: 'Numbers are the foundation of all mathematics. The number line places every number in order, extending infinitely in both directions from zero.',
     bullets: [
       'Integers are whole numbers: ..., -3, -2, -1, 0, 1, 2, 3 — no decimals',
@@ -54,6 +75,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'math-2', nodeId: 'maths_basics', order: 2, title: 'Fractions, Decimals & Percentages',
     xpReward: 20, difficulty: 'easy',
+    tier: 'foundation',
     explanation: 'Fractions, decimals and percentages are three different ways to express the same part of a whole. Fluency in converting between them is a core maths skill.',
     bullets: [
       'A fraction (3/4) means 3 parts out of 4 equal parts',
@@ -81,6 +103,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'math-3', nodeId: 'maths_basics', order: 3, title: 'Algebra — Variables & Equations',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Algebra uses letters (variables) to represent unknown values. An equation states that two expressions are equal, and we solve it by isolating the variable.',
     bullets: [
       'A variable (x, y, n) stands for an unknown number',
@@ -108,6 +131,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'math-4', nodeId: 'maths_basics', order: 4, title: 'Geometry — Shapes, Angles & Area',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Geometry studies shapes, sizes and their properties. Key skills include calculating area, perimeter and understanding angle relationships.',
     bullets: [
       'Full rotation = 360°; straight line = 180°; right angle = 90°',
@@ -135,6 +159,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'math-5', nodeId: 'maths_basics', order: 5, title: 'Statistics — Averages & Probability',
     xpReward: 35, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Statistics is the science of collecting and interpreting data. Understanding averages and probability lets you reason numerically about the real world.',
     bullets: [
       'Mean = sum of all values ÷ number of values',
@@ -256,6 +281,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'sci-1', nodeId: 'science_foundations', order: 1, title: 'The Scientific Method',
     xpReward: 20, difficulty: 'easy',
+    tier: 'foundation',
     explanation: 'The scientific method is a systematic process for investigating the world. It ensures conclusions are based on evidence and can be verified by others.',
     bullets: [
       'Steps: Observation → Question → Hypothesis → Experiment → Analysis → Conclusion',
@@ -274,6 +300,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'sci-2', nodeId: 'science_foundations', order: 2, title: "Forces & Newton's Laws",
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: "Forces are pushes or pulls that can change an object's motion. Newton's three laws form the foundation of classical mechanics.",
     bullets: [
       'First Law (Inertia): objects stay at rest or in uniform motion unless acted on by an unbalanced force',
@@ -292,6 +319,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'sci-3', nodeId: 'science_foundations', order: 3, title: 'Atoms, Elements & Compounds',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'All matter is made of atoms. Understanding atomic structure explains why elements behave differently and how they combine to form the substances around us.',
     bullets: [
       'Atoms contain a nucleus (protons + neutrons) surrounded by electrons in shells',
@@ -310,6 +338,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'sci-4', nodeId: 'science_foundations', order: 4, title: 'Cells & Life Processes',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Cells are the basic structural and functional units of all living organisms. Every function of a living body ultimately comes down to what happens inside individual cells.',
     bullets: [
       'Animal cells: cell membrane, cytoplasm, nucleus, mitochondria',
@@ -328,6 +357,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'sci-5', nodeId: 'science_foundations', order: 5, title: 'Energy — Types & Conservation',
     xpReward: 35, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Energy is the capacity to do work. It exists in many forms, can be transferred or transformed, but the total amount in a closed system is always constant.',
     bullets: [
       'Forms: kinetic, gravitational potential, elastic potential, thermal, chemical, electrical, nuclear, sound, light',
@@ -348,6 +378,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'phil-1', nodeId: 'philosophy', order: 1, title: 'What is Philosophy?',
     xpReward: 20, difficulty: 'easy',
+    tier: 'foundation',
     explanation: 'Philosophy is the systematic study of fundamental questions about existence, knowledge, ethics and reason. It teaches you to think more clearly about everything.',
     bullets: [
       'The word "philosophy" means "love of wisdom" in Greek',
@@ -366,6 +397,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'phil-2', nodeId: 'philosophy', order: 2, title: 'Logic & Argument Structure',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Logic is the study of valid reasoning. A valid argument has a structure where true premises guarantee a true conclusion — regardless of whether the conclusion seems intuitive.',
     bullets: [
       'Deductive argument: if premises are true and form is valid, the conclusion is guaranteed',
@@ -384,6 +416,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'phil-3', nodeId: 'philosophy', order: 3, title: 'Ethics & Moral Philosophy',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Ethics is the branch of philosophy asking how we should act and what makes something right or wrong. Different ethical theories offer competing but coherent frameworks.',
     bullets: [
       'Utilitarianism (Mill, Bentham): right action maximises overall happiness — "greatest good for the greatest number"',
@@ -402,6 +435,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'phil-4', nodeId: 'philosophy', order: 4, title: 'Epistemology — Theory of Knowledge',
     xpReward: 35, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Epistemology asks: what is knowledge, where does it come from, and what are its limits? It underpins all reasoning because every claim depends on what we can know.',
     bullets: [
       'Classic definition of knowledge: justified true belief (Plato)',
@@ -420,6 +454,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'phil-5', nodeId: 'philosophy', order: 5, title: 'Free Will vs Determinism',
     xpReward: 40, difficulty: 'hard',
+    tier: 'gcse',
     explanation: 'Do humans freely choose their actions, or are decisions the inevitable result of prior causes? This debate cuts to the heart of morality, responsibility and identity.',
     bullets: [
       'Hard Determinism: every event, including human choice, is causally determined by prior events',
@@ -3551,6 +3586,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'psych-1', nodeId: 'psychology', order: 1, title: 'Foundations of Psychology',
     xpReward: 20, difficulty: 'easy',
+    tier: 'foundation',
     whyItMatters: 'Understanding the science of human behaviour helps you understand yourself and others — making you more effective in every relationship and decision.',
     explanation: 'Psychology is the scientific study of mind and behaviour. It emerged as a distinct discipline in 1879 when Wilhelm Wundt opened the first psychology lab. Major schools of thought: structuralism (Wundt — analyse the structure of conscious experience), functionalism (James — what does the mind do?), behaviourism (Watson, Skinner — only observable behaviour, no internal states), cognitive psychology (memory, attention, perception), humanistic psychology (Maslow, Rogers — human potential and self-actualisation), evolutionary psychology (adaptations and survival-based behaviours).',
     bullets: [
@@ -3570,6 +3606,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'psych-2', nodeId: 'psychology', order: 2, title: 'Cognitive Biases and Heuristics',
     xpReward: 25, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Daniel Kahneman\'s dual-process theory: System 1 (fast, automatic, emotional, prone to bias) and System 2 (slow, deliberate, logical, effortful). Most decisions are made by System 1 — heuristics (mental shortcuts) that are usually accurate but systematically fail in predictable ways. These failures are cognitive biases. Key ones: availability heuristic (judging frequency by ease of recall), representativeness heuristic (assuming something matches a category based on surface features), anchoring (over-weighting the first number heard). Understanding these is the first step to making better decisions.',
     bullets: [
       'System 1 is not "wrong" — it is fast and accurate most of the time; biases occur when it is applied to problems it was not designed for',
@@ -3588,6 +3625,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'psych-3', nodeId: 'psychology', order: 3, title: 'Motivation and Behaviour Change',
     xpReward: 25, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Self-Determination Theory (Deci and Ryan): intrinsic motivation (driven by internal satisfaction) produces superior long-term outcomes compared to extrinsic motivation (rewards and punishments). Three innate psychological needs: competence, autonomy, and relatedness. Skinner\'s operant conditioning: behaviour is shaped by consequences. Reinforcement (positive/negative) increases behaviour; punishment decreases it. Variable ratio reinforcement (unpredictable rewards — like slot machines) produces the strongest and most persistent behaviour. BJ Fogg\'s Tiny Habits model: make new behaviours tiny, attach them to existing habits (anchors), and celebrate immediately.',
     bullets: [
       'Intrinsic motivation is more durable than extrinsic — external rewards can undermine intrinsic motivation (overjustification effect)',
@@ -3606,6 +3644,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'psych-4', nodeId: 'psychology', order: 4, title: 'Social Psychology — How Others Shape Us',
     xpReward: 25, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Social psychology studies how people\'s thoughts, feelings, and behaviours are influenced by others. Landmark studies: Milgram obedience experiment (65% of ordinary people administered apparently lethal electric shocks under authority pressure — the situation matters more than character), Stanford Prison Experiment (since challenged but showed rapid situational role adoption), Asch conformity experiment (75% of people gave obviously wrong answers to match the group at least once). Social proof, authority, reciprocity, scarcity, liking, and commitment are Cialdini\'s 6 principles of influence.',
     bullets: [
       'Milgram\'s finding: the situation (authority, context, gradual escalation) shapes behaviour more than individual character',
@@ -3624,6 +3663,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'psych-5', nodeId: 'psychology', order: 5, title: 'Personality, Intelligence, and the Big Five',
     xpReward: 30, difficulty: 'hard',
+    tier: 'gcse',
     explanation: 'The Big Five (OCEAN) is the most empirically supported personality model: Openness (creativity, curiosity), Conscientiousness (organisation, self-discipline), Extraversion (sociability, assertiveness), Agreeableness (cooperation, trust), Neuroticism (emotional instability, anxiety). Conscientiousness is the strongest personality predictor of career success and life outcomes. Intelligence: g factor (general intelligence) is highly heritable (~50%) and predictive of academic and occupational outcomes. IQ is not fixed — Flynn effect shows IQ scores rising ~3 points per decade across populations. Growth mindset (Dweck): intelligence can be developed through effort.',
     bullets: [
       'Big Five (OCEAN) is cross-cultural, stable over time, and more predictive than MBTI (which lacks reliability)',
@@ -5228,6 +5268,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'wh-1', nodeId: 'world_history', order: 1, title: 'The Agricultural Revolution — History\'s Biggest Turning Point',
     xpReward: 20, difficulty: 'easy',
+    tier: 'foundation',
     whyItMatters: 'Every city, government, war, and job that has ever existed traces back to one decision: staying put to grow food.',
     explanation: 'For ~290,000 of our 300,000 years, humans were nomadic hunter-gatherers in bands of 20–50. Around 10,000 BCE, in the Fertile Crescent (modern Iraq/Syria/Turkey), humans began cultivating wheat and domesticating animals. This changed everything: surplus food meant some people could stop farming — creating the first specialists (priests, soldiers, craftsmen, rulers), the first cities (Uruk, ~4500 BCE), writing (invented for accounting, not poetry), and hierarchy. The trade-off was real: early farmers were shorter, sicker, and worked harder than foragers — but farming supported 100× the population, so it won everywhere. Similar revolutions happened independently in China (rice), Mesoamerica (maize), and the Andes (potatoes) — evidence it was driven by circumstance, not genius.',
     bullets: [
@@ -5253,6 +5294,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'wh-2', nodeId: 'world_history', order: 2, title: 'Empires — Rome, China, and the Patterns of Power',
     xpReward: 25, difficulty: 'easy',
+    tier: 'gcse',
     explanation: 'Empires are history\'s dominant political form. Rome (c.500 BCE–476 CE west, 1453 east) built the Mediterranean world: roads, law (the basis of most European legal systems), Latin (parent of French, Spanish, Italian), and Christianity as a state religion. Han China (206 BCE–220 CE), Rome\'s contemporary and equal, standardised writing, currency, and the civil-service exam — a meritocratic bureaucracy Europe wouldn\'t match for 1,500 years. The recurring imperial pattern: expansion brings wealth → wealth funds armies and elites → overextension, fiscal crisis, and frontier pressure → fragmentation. Rome fell to this cycle (plus plagues and migration pressure); dynastic China rode it repeatedly, collapsing and reunifying under new dynasties. The lesson historians draw: empires rarely fall to a single blow — they erode from fiscal exhaustion and internal division, with the final invasion merely collecting the pieces.',
     bullets: [
       'Rome and Han China were contemporaries of comparable size (~60M people each) — connected by the Silk Road',
@@ -5277,6 +5319,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'wh-3', nodeId: 'world_history', order: 3, title: 'The Age of Connection — Islam, Mongols, and 1492',
     xpReward: 25, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Three forces stitched the world together between 600 and 1600. The Islamic Golden Age (~750–1258): while Europe fragmented, the Abbasid Caliphate preserved and extended Greek learning — algebra (al-Khwarizmi, whose name gives us "algorithm"), optics, medicine, and the numerals we use today (Indian in origin, transmitted by Arab scholars). The Mongol Empire (1206–1368): history\'s largest contiguous empire, brutal in conquest but revolutionary in effect — the Pax Mongolica secured the Silk Road, moving goods, technologies (gunpowder, printing westward), and unfortunately the Black Death, which killed a third of Europe (1347–51) and broke feudalism by making surviving labour scarce and valuable. Then 1492: Columbus connects the hemispheres, triggering the Columbian Exchange — potatoes, maize, and tomatoes eastward (fuelling population booms in Europe and China); horses, wheat, and devastating diseases westward (killing up to 90% of indigenous Americans — the largest demographic catastrophe in history).',
     bullets: [
       '"Algorithm" and "algebra" are Arabic words — the Islamic world was the scientific centre while medieval Europe lagged',
@@ -5301,6 +5344,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'wh-4', nodeId: 'world_history', order: 4, title: 'Revolutions — Industrial, American, French',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'The modern world was made between 1760 and 1850 by parallel revolutions. Industrial (Britain, ~1760 onward): steam power, factories, and railways broke the ancient limit where nearly everyone farmed — GDP per person, flat for millennia, began the exponential climb that continues today; cities exploded, and with them both unprecedented wealth and brutal working conditions that birthed modern politics (unions, socialism, regulation). American (1776): thirteen colonies established that a large modern state could be a republic — no king — with a written constitution and enumerated rights. French (1789): more radical and more bloody — abolished feudalism and monarchy, proclaimed universal rights ("liberty, equality, fraternity"), collapsed into the Terror, and produced Napoleon, whose conquests spread revolutionary law (the civil code) across Europe even as he crowned himself emperor. Every modern political ideology — liberalism, conservatism, socialism, nationalism — was forged in reaction to these three events.',
     bullets: [
       'GDP per person was essentially flat for all history until ~1800 — the "hockey stick" begins with industrialisation',
@@ -5325,6 +5369,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'wh-5', nodeId: 'world_history', order: 5, title: 'The Twentieth Century — Wars, Ideologies, and the Modern Order',
     xpReward: 35, difficulty: 'hard',
+    tier: 'gcse',
     explanation: 'The 20th century compressed more change than any before it. WWI (1914–18): industrial war killed ~17M, destroyed four empires (German, Austro-Hungarian, Ottoman, Russian), and its botched peace (Versailles) planted WWII. The interwar years bred totalitarianism: communism (USSR from 1917) and fascism (Italy, then Nazi Germany) — both promising order amid depression and humiliation. WWII (1939–45): ~70–85M dead, the Holocaust\'s industrialised genocide of 6M Jews, and atomic weapons — ending with the US and USSR as superpowers. The Cold War (1947–91): a 44-year ideological standoff fought through proxies (Korea, Vietnam, Afghanistan), a nuclear arms race that several times nearly ended civilisation (Cuban Missile Crisis, 1962), and a space race — resolved not by war but by Soviet economic exhaustion. Meanwhile decolonisation (1945–75) created most of today\'s nations as European empires dissolved. The post-1945 order — UN, NATO, IMF/World Bank, EU — was built explicitly to prevent a third world war; understanding that architecture and its current strains is understanding today\'s news.',
     bullets: [
       'WWI destroyed four empires and its peace treaty (Versailles) helped cause WWII',
@@ -5966,6 +6011,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'bio-1', nodeId: 'human_biology', order: 1, title: 'Cells, DNA, and the Body\'s Building Blocks',
     xpReward: 25, difficulty: 'easy',
+    tier: 'foundation',
     whyItMatters: 'You live in this machine for your whole life — understanding its basic operating principles is the foundation of every health decision you\'ll ever make.',
     explanation: 'Your body is ~37 trillion cells, each a self-contained factory. Every cell (except red blood cells) carries your complete DNA — 2 metres of it coiled into a nucleus — the instruction manual written in just four chemical "letters" (A, T, C, G). Genes are sections of DNA that code for proteins, the molecular machines that do nearly all the work: enzymes that digest food, antibodies that fight infection, collagen that holds you together. Cells specialise: a neuron, a muscle cell, and a skin cell contain identical DNA but express different genes — like one cookbook, different recipes cooked. Cells constantly die and are replaced (your skin renews monthly, your gut lining weekly); this renewal is why you heal, and its errors — cells dividing when they shouldn\'t — are what cancer is.',
     bullets: [
@@ -5991,6 +6037,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'bio-2', nodeId: 'human_biology', order: 2, title: 'The Cardiovascular System — Heart, Blood, and Vessels',
     xpReward: 25, difficulty: 'easy',
+    tier: 'gcse',
     explanation: 'Your heart beats ~100,000 times a day, pumping ~5 litres of blood through ~100,000 km of vessels — enough to circle Earth twice. The circuit: the right side pumps oxygen-poor blood to the lungs to collect oxygen and dump CO2; the left side (thicker, stronger) pumps that oxygen-rich blood to the entire body. Arteries carry blood AWAY from the heart (under high pressure — hence the pulse), veins return it (low pressure, with valves to fight gravity), and capillaries — one cell thick — are where the actual exchange of oxygen, nutrients, and waste happens. Blood pressure (e.g. 120/80) measures the force against artery walls during a beat (systolic) and between beats (diastolic); chronically high pressure silently damages vessels, which is why it\'s called the "silent killer." This is why cardiovascular fitness and not smoking matter so much: you\'re protecting 100,000 km of plumbing you can\'t replace.',
     bullets: [
       'The heart beats ~100,000 times daily, moving ~5 litres of blood through ~100,000 km of vessels',
@@ -6015,6 +6062,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'bio-3', nodeId: 'human_biology', order: 3, title: 'The Immune System — Your Standing Army',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Your immune system is a layered defence. First, barriers: skin, mucus, stomach acid, and tears keep most invaders out. If they breach, the innate immune system responds fast and generically — white blood cells that engulf invaders, inflammation (the redness, heat, swelling that means the system is working, not failing). Then the adaptive immune system responds slower but with precision: it learns the specific enemy and produces antibodies tailored to it, and crucially it REMEMBERS — which is why you get chickenpox once, and why vaccines work: a vaccine shows the immune system a harmless preview (a dead/weakened germ or its blueprint) so it builds memory without the disease. Fever is deliberate — raising body temperature hampers pathogens and speeds immune cells. This system can also err: allergies are overreactions to harmless things (pollen), and autoimmune diseases are the system attacking the body\'s own cells.',
     bullets: [
       'Layered defence: barriers (skin, acid) → innate (fast, generic) → adaptive (slow, specific, remembers)',
@@ -6039,6 +6087,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'bio-4', nodeId: 'human_biology', order: 4, title: 'Hormones and the Endocrine System',
     xpReward: 30, difficulty: 'medium',
+    tier: 'gcse',
     explanation: 'Hormones are chemical messengers released into the blood by glands, travelling to distant organs to regulate almost everything slowly and powerfully. Key players: insulin (from the pancreas) lets cells absorb glucose from blood — its failure is diabetes; cortisol (adrenal glands) is the stress and alertness hormone, useful in bursts, damaging when chronically elevated; adrenaline drives the instant fight-or-flight surge; thyroid hormones set your metabolic rate (too little = sluggish, cold, weight gain; too much = wired, hot, weight loss); melatonin governs sleep timing; and the sex hormones (testosterone, oestrogen) drive development and reproduction. The system runs on feedback loops, like a thermostat: a gland releases a hormone, the effect is sensed, and release dials down. Understanding hormones demystifies huge parts of daily life — why stress makes you crave sugar (cortisol), why screens before bed disrupt sleep (suppressed melatonin), and why blood-sugar spikes and crashes affect mood and energy (insulin).',
     bullets: [
       'Hormones are blood-borne chemical messengers from glands — slow but powerful, body-wide',
@@ -6063,6 +6112,7 @@ export const LESSONS: Lesson[] = [
   {
     id: 'bio-5', nodeId: 'human_biology', order: 5, title: 'The Brain and Nervous System',
     xpReward: 35, difficulty: 'hard',
+    tier: 'gcse',
     explanation: 'The nervous system is your body\'s electrical network. The brain (~86 billion neurons) plus spinal cord form the central nervous system; nerves branching everywhere form the peripheral. Neurons communicate through a hybrid of electricity and chemistry: an electrical signal travels down the neuron, then chemical messengers (neurotransmitters like dopamine, serotonin, GABA) cross the tiny gap (synapse) to the next neuron. This is where most psychiatric medications and recreational drugs act. The system has two modes managed automatically: sympathetic (fight-or-flight — heart up, digestion down) and parasympathetic (rest-and-digest — the recovery state). Crucial modern insight: neuroplasticity — the brain physically rewires based on use. Repeated thoughts and actions strengthen neural pathways ("neurons that fire together wire together"); this is the biology of every habit, skill, and recovery from injury. The brain is not fixed hardware — it is continuously reshaped by what you repeatedly do, which is the deepest reason deliberate practice and habit design work at all.',
     bullets: [
       'CNS (brain + spinal cord) and peripheral nerves; the brain has ~86 billion neurons',
@@ -6697,6 +6747,888 @@ export const LESSONS: Lesson[] = [
         why: 'Professional-grade production moved from costly studios to bedrooms with a laptop, and sampling let artists build new music from fragments of the old — a democratisation of creation.' },
       { id: 'mus-5-q5', question: 'According to the lesson, genuinely good musical taste is best understood as:', options: ['Knowing the officially "correct" music', 'Having listened widely and thoughtfully enough to know what moves you and why', 'Only liking obscure music', 'Following the algorithm'], correctIndex: 1,
         why: 'Taste isn\'t about approved answers or being obscure — it\'s the self-knowledge that comes from wide, deep, curious listening: knowing what genuinely moves you and being able to say why.' },
+    ],
+  },
+
+  // ══ MATHEMATICS — ACADEMIC LADDER (GCSE → A-LEVEL → DEGREE) ═══════════════════
+  // Foundation & early GCSE = math-1..5 above. The following extend the ladder.
+
+  // ── GCSE tier ──
+  {
+    id: 'math-6', nodeId: 'maths_basics', order: 6, title: 'Trigonometry — Triangles and Angles', tier: 'gcse',
+    xpReward: 35, difficulty: 'medium',
+    whyItMatters: 'Trigonometry is how we measure the unreachable — the height of a mountain, the distance to a ship, the angle of a ramp — using nothing but ratios in a triangle.',
+    explanation: 'Trigonometry relates the angles of a right-angled triangle to the ratios of its sides. The three core ratios, remembered by SOH-CAH-TOA: sin(θ) = Opposite/Hypotenuse, cos(θ) = Adjacent/Hypotenuse, tan(θ) = Opposite/Adjacent. The hypotenuse is the longest side (opposite the right angle); "opposite" and "adjacent" are relative to the angle θ you\'re working with. Given an angle and one side, you can find the others; given two sides, the inverse functions (sin⁻¹, cos⁻¹, tan⁻¹) recover the angle. These ratios are fixed for a given angle regardless of the triangle\'s size — that\'s what makes them powerful. Beyond right angles, the sine rule and cosine rule handle any triangle. Trigonometry underpins navigation, engineering, physics (waves, forces), and computer graphics.',
+    bullets: [
+      'SOH-CAH-TOA: sin = Opp/Hyp, cos = Adj/Hyp, tan = Opp/Adj',
+      'The hypotenuse is the longest side, opposite the right angle',
+      'Inverse functions (sin⁻¹ etc.) find an angle from a ratio of sides',
+      'The ratios depend only on the angle, not the triangle\'s size',
+      'Sine and cosine rules extend trig to non-right-angled triangles',
+    ],
+    example: 'A ladder leans at 70° to the ground and reaches 4m up a wall. Its length = 4 / sin(70°) ≈ 4.26m, since sin(70°) = opposite(4) / hypotenuse(ladder).',
+    quiz: [
+      { id: 'math-6-q1', question: 'In a right-angled triangle, sin(θ) equals:', options: ['Adjacent / Hypotenuse', 'Opposite / Hypotenuse', 'Opposite / Adjacent', 'Hypotenuse / Opposite'], correctIndex: 1,
+        why: 'SOH: Sine = Opposite / Hypotenuse. The first letters of the mnemonic give each ratio directly.' },
+      { id: 'math-6-q2', question: 'A right triangle has an angle of 30° with the opposite side 5cm. The hypotenuse is (sin 30° = 0.5):', options: ['2.5cm', '10cm', '5cm', '15cm'], correctIndex: 1,
+        why: 'sin(30°) = opposite/hypotenuse, so 0.5 = 5/h, giving h = 5/0.5 = 10cm. Rearranging the ratio finds the missing side.' },
+      { id: 'math-6-q3', question: 'To find an angle when you know the opposite and adjacent sides, you use:', options: ['tan(θ)', 'tan⁻¹ (inverse tan)', 'sin(θ)', 'The hypotenuse'], correctIndex: 1,
+        why: 'Opposite and adjacent give tan(θ); to recover the ANGLE from that ratio you apply the inverse, tan⁻¹ (arctan).' },
+      { id: 'math-6-q4', question: 'The ratios sin, cos, tan for a given angle:', options: ['Change with triangle size', 'Are fixed regardless of the triangle\'s size', 'Only work for 45°', 'Require the hypotenuse to be 1'], correctIndex: 1,
+        why: 'Similar triangles scale all sides equally, so the ratios stay constant for a given angle — exactly why a single value of sin(30°) works for every 30° triangle.' },
+      { id: 'math-6-q5', question: 'For a triangle that has no right angle, you would use:', options: ['SOH-CAH-TOA only', 'The sine rule or cosine rule', 'Pythagoras only', 'None — it is impossible'], correctIndex: 1,
+        why: 'The basic ratios need a right angle; the sine and cosine rules generalise trigonometry to any triangle.' },
+    ],
+  },
+  {
+    id: 'math-7', nodeId: 'maths_basics', order: 7, title: 'Quadratic Equations', tier: 'gcse',
+    xpReward: 35, difficulty: 'medium',
+    explanation: 'A quadratic is an equation of the form ax² + bx + c = 0, where the highest power is 2. Its graph is a parabola (a U-shape, or ∩ if a is negative), and the solutions ("roots") are where it crosses the x-axis — there can be two, one, or none. Three methods solve them: (1) Factorising — rewrite as (x + p)(x + q) = 0, so x = −p or −q; works cleanly when the numbers cooperate. (2) The quadratic formula — x = [−b ± √(b² − 4ac)] / 2a — works for ALL quadratics. (3) Completing the square, which also reveals the parabola\'s turning point. The discriminant, b² − 4ac, tells you the number of real roots before solving: positive = two roots, zero = one (repeated) root, negative = no real roots. Quadratics model projectile motion, areas, optimisation, and appear throughout physics and economics.',
+    bullets: [
+      'Quadratic form: ax² + bx + c = 0; its graph is a parabola',
+      'Roots are where the parabola crosses the x-axis: two, one, or none',
+      'Solve by factorising, the quadratic formula, or completing the square',
+      'Quadratic formula x = [−b ± √(b²−4ac)] / 2a works for every quadratic',
+      'Discriminant b²−4ac: positive → 2 roots, zero → 1 root, negative → no real roots',
+    ],
+    example: 'Solve x² − 5x + 6 = 0 by factorising: (x − 2)(x − 3) = 0, so x = 2 or x = 3. Check: 2²−5(2)+6 = 0 ✓.',
+    quiz: [
+      { id: 'math-7-q1', question: 'A quadratic equation is one where the highest power of the variable is:', options: ['1', '2', '3', '0'], correctIndex: 1,
+        why: 'The defining feature is the x² term — "quad" refers to the squared power, giving the parabola shape.' },
+      { id: 'math-7-q2', question: 'Factorised as (x − 4)(x + 1) = 0, the solutions are:', options: ['x = 4 or x = 1', 'x = 4 or x = −1', 'x = −4 or x = 1', 'x = 0'], correctIndex: 1,
+        why: 'A product is zero when either factor is zero: x − 4 = 0 gives x = 4; x + 1 = 0 gives x = −1. Note the sign flips.' },
+      { id: 'math-7-q3', question: 'The discriminant b² − 4ac being negative means the quadratic has:', options: ['Two real roots', 'One repeated root', 'No real roots', 'Infinite roots'], correctIndex: 2,
+        why: 'A negative value under the square root has no real solution, so the parabola never crosses the x-axis — no real roots.' },
+      { id: 'math-7-q4', question: 'The quadratic formula is preferred when:', options: ['The equation factorises neatly', 'The quadratic does not factorise easily', 'There is no x² term', 'a equals zero'], correctIndex: 1,
+        why: 'The formula works for every quadratic, so it\'s the reliable fallback when clean factors don\'t exist.' },
+      { id: 'math-7-q5', question: 'The graph of a quadratic with a positive coefficient of x² is:', options: ['A straight line', 'A U-shaped parabola (opening upward)', 'A circle', 'An ∩-shaped parabola'], correctIndex: 1,
+        why: 'A positive x² coefficient opens the parabola upward (U-shape); a negative one flips it to ∩.' },
+    ],
+  },
+
+  // ── A-LEVEL tier ──
+  {
+    id: 'math-8', nodeId: 'maths_basics', order: 8, title: 'Differentiation — The Rate of Change', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    whyItMatters: 'Calculus is the mathematics of change, and it is the single most powerful tool humanity has built for describing the physical world — from orbits to economies.',
+    explanation: 'Differentiation finds the instantaneous rate of change of a function — the gradient (slope) of its graph at any point. Where the gradient of a straight line is constant, a curve\'s gradient varies, and the derivative dy/dx gives it as a function. The formal idea is a limit: the gradient between two points as they slide infinitely close together. In practice you use rules. The power rule is the workhorse: if y = xⁿ, then dy/dx = n·xⁿ⁻¹ (multiply by the power, then reduce the power by one). So the derivative of x³ is 3x², and of 5x² is 10x. Derivatives reveal where a function is increasing (positive gradient) or decreasing (negative), and stationary points (gradient = 0) locate maxima and minima — the basis of optimisation. Physically, differentiating position gives velocity, and differentiating velocity gives acceleration.',
+    bullets: [
+      'The derivative dy/dx gives the gradient of a curve at each point',
+      'Formally it is a limit: the slope between two points as they merge',
+      'Power rule: d/dx(xⁿ) = n·xⁿ⁻¹ — multiply by the power, reduce power by 1',
+      'Gradient > 0 means increasing, < 0 decreasing, = 0 a stationary point',
+      'Stationary points locate maxima/minima — the foundation of optimisation',
+    ],
+    example: 'For y = x³ − 6x, dy/dx = 3x² − 6. Setting 3x² − 6 = 0 gives x² = 2, so stationary points at x = ±√2 — the curve\'s peak and trough.',
+    quiz: [
+      { id: 'math-8-q1', question: 'The derivative of a function represents:', options: ['Its area', 'The gradient (rate of change) at each point', 'Its highest value', 'Its average'], correctIndex: 1,
+        why: 'Differentiation gives the instantaneous slope of the curve — how fast the output changes as the input changes.' },
+      { id: 'math-8-q2', question: 'Using the power rule, the derivative of x⁴ is:', options: ['4x³', 'x³', '4x⁵', '3x⁴'], correctIndex: 0,
+        why: 'd/dx(xⁿ) = n·xⁿ⁻¹, so for n = 4: multiply by 4 and reduce the power to 3, giving 4x³.' },
+      { id: 'math-8-q3', question: 'The derivative of 5x² is:', options: ['5x', '10x', '10x²', '5'], correctIndex: 1,
+        why: 'Bring down the power 2 (2×5 = 10) and reduce the power by one: 10x¹ = 10x.' },
+      { id: 'math-8-q4', question: 'At a maximum or minimum point of a smooth curve, the gradient is:', options: ['Maximum', 'Zero', 'Undefined', 'Negative'], correctIndex: 1,
+        why: 'The curve momentarily flattens at a peak or trough, so dy/dx = 0 — which is exactly how calculus locates optima.' },
+      { id: 'math-8-q5', question: 'Differentiating an object\'s position with respect to time gives its:', options: ['Acceleration', 'Velocity', 'Distance', 'Mass'], correctIndex: 1,
+        why: 'Velocity is the rate of change of position, so it is the derivative of position; differentiating again gives acceleration.' },
+    ],
+  },
+  {
+    id: 'math-9', nodeId: 'maths_basics', order: 9, title: 'Integration — Accumulation and Area', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Integration is the reverse of differentiation, and it answers a different question: how much accumulates? Geometrically, the definite integral gives the area under a curve between two limits. The reverse power rule: ∫xⁿ dx = xⁿ⁺¹/(n+1) + C (raise the power by one, divide by the new power). The "+ C" (constant of integration) appears in indefinite integrals because differentiation destroys constants — many curves share the same gradient function. The profound link is the Fundamental Theorem of Calculus: differentiation and integration are inverse operations, and the definite integral from a to b equals F(b) − F(a), where F is the antiderivative. This connects rates of change to totals: integrating velocity over time gives distance travelled; integrating a rate of flow gives total volume. Integration is how we sum infinitely many infinitesimal pieces — the mathematics behind areas, volumes, work, probability distributions, and vast tracts of physics and engineering.',
+    bullets: [
+      'Integration reverses differentiation and measures accumulation (area under a curve)',
+      'Reverse power rule: ∫xⁿ dx = xⁿ⁺¹/(n+1) + C',
+      'The "+ C" appears because differentiating a constant gives zero',
+      'Fundamental Theorem: differentiation and integration are inverse operations',
+      'Definite integral a→b = F(b) − F(a); integrating velocity gives distance',
+    ],
+    example: '∫(2x) dx = x² + C. Definite from 0 to 3: [x²] = 3² − 0² = 9 — the area under the line y = 2x from 0 to 3.',
+    quiz: [
+      { id: 'math-9-q1', question: 'Integration is the reverse process of:', options: ['Multiplication', 'Differentiation', 'Factorising', 'Adding'], correctIndex: 1,
+        why: 'Integration undoes differentiation — this inverse relationship is the heart of the Fundamental Theorem of Calculus.' },
+      { id: 'math-9-q2', question: 'Geometrically, a definite integral gives the:', options: ['Gradient of a curve', 'Area under the curve between two limits', 'Length of a line', 'Highest point'], correctIndex: 1,
+        why: 'The definite integral sums infinitely thin strips under the curve, giving the enclosed area between the limits.' },
+      { id: 'math-9-q3', question: 'Using the reverse power rule, ∫x² dx equals:', options: ['2x + C', 'x³/3 + C', '3x³ + C', 'x³ + C'], correctIndex: 1,
+        why: 'Raise the power by one (x³) and divide by the new power (3): x³/3 + C.' },
+      { id: 'math-9-q4', question: 'The "+ C" in an indefinite integral exists because:', options: ['Of rounding', 'Differentiating any constant gives zero, so it is unknown', 'It marks the answer', 'Integrals need units'], correctIndex: 1,
+        why: 'Since the derivative of a constant is zero, infinitely many functions differing by a constant share the same derivative — C captures that ambiguity.' },
+      { id: 'math-9-q5', question: 'Integrating an object\'s velocity over time gives its:', options: ['Acceleration', 'Distance travelled', 'Mass', 'Speed limit'], correctIndex: 1,
+        why: 'Distance is the accumulation of velocity over time — the total "adds up" to the area under the velocity–time graph.' },
+    ],
+  },
+  {
+    id: 'math-10', nodeId: 'maths_basics', order: 10, title: 'Sequences, Series, and Functions', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'A sequence is an ordered list of numbers following a rule; a series is their sum. Two types dominate. Arithmetic sequences add a constant difference d each term (2, 5, 8, 11…); the nth term is a + (n−1)d, and the sum of n terms is n/2·(first + last). Geometric sequences multiply by a constant ratio r (3, 6, 12, 24…); the nth term is ar^(n−1). Crucially, an infinite geometric series converges to a finite sum a/(1−r) when |r| < 1 — the basis of the compound-interest and infinite-decimal results. Functions map each input to exactly one output; key ideas at this level include composite functions (f(g(x)) — applying one then another), inverse functions (which undo a function, reflecting its graph in y = x), and domain/range (the valid inputs and resulting outputs). The exponential function eˣ and logarithms (its inverse) are central: logs turn multiplication into addition and are how we solve equations where the unknown is a power.',
+    bullets: [
+      'Arithmetic: add constant d; nth term a + (n−1)d; sum n/2·(first+last)',
+      'Geometric: multiply by ratio r; nth term ar^(n−1)',
+      'Infinite geometric series converges to a/(1−r) when |r| < 1',
+      'Composite f(g(x)) applies functions in sequence; inverses undo them',
+      'Logarithms are the inverse of exponentials — they solve for an unknown power',
+    ],
+    example: 'The geometric series 1 + ½ + ¼ + ⅛ + … has a = 1, r = ½, so it converges to 1/(1−½) = 2 — an infinite sum with a finite total.',
+    quiz: [
+      { id: 'math-10-q1', question: 'In an arithmetic sequence, consecutive terms differ by:', options: ['A constant ratio', 'A constant difference', 'A random amount', 'A square number'], correctIndex: 1,
+        why: 'Arithmetic sequences ADD a fixed amount each step (the common difference d); geometric ones multiply by a fixed ratio.' },
+      { id: 'math-10-q2', question: 'The nth term of a geometric sequence with first term a and ratio r is:', options: ['a + (n−1)r', 'ar^(n−1)', 'a·n·r', 'a/r^n'], correctIndex: 1,
+        why: 'Each term multiplies the previous by r, so the nth term is a multiplied by r a total of (n−1) times: ar^(n−1).' },
+      { id: 'math-10-q3', question: 'An infinite geometric series converges to a finite sum only when:', options: ['r > 1', '|r| < 1', 'r = 1', 'a = 0'], correctIndex: 1,
+        why: 'If the ratio has magnitude below 1, terms shrink toward zero fast enough to sum to the finite value a/(1−r); otherwise it diverges.' },
+      { id: 'math-10-q4', question: 'The composite function f(g(x)) means:', options: ['Multiply f by g', 'Apply g first, then apply f to the result', 'Add the functions', 'Apply f first, then g'], correctIndex: 1,
+        why: 'Read inside-out: g acts on x first, then f acts on g\'s output. Order matters — f(g(x)) generally differs from g(f(x)).' },
+      { id: 'math-10-q5', question: 'Logarithms are used to solve equations where the unknown is:', options: ['Being added', 'An exponent (a power)', 'Squared', 'A denominator'], correctIndex: 1,
+        why: 'Logs are the inverse of exponentials, so they bring an unknown down from the exponent — e.g. solving 2ˣ = 10 needs x = log₂10.' },
+    ],
+  },
+
+  // ── DEGREE tier ──
+  {
+    id: 'math-11', nodeId: 'maths_basics', order: 11, title: 'Mathematical Proof and Logic', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    whyItMatters: 'University mathematics is not about calculation but about proof — establishing truth with total certainty from first principles. This is the intellectual leap that defines the degree.',
+    explanation: 'At degree level, mathematics becomes the art of rigorous proof: demonstrating that a statement is true beyond any doubt, for all cases, from agreed axioms. Several proof techniques form the toolkit. Direct proof assumes the hypothesis and derives the conclusion step by step. Proof by contradiction assumes the statement is FALSE and derives an impossibility, forcing it to be true — the classic proof that √2 is irrational works this way. Proof by induction establishes a statement for all natural numbers by proving a base case, then that truth at n implies truth at n+1 (like toppling an infinite line of dominoes). Proof by counterexample disproves a universal claim with a single failing case. Underlying all of this is logic: implication (if P then Q), the difference between a statement and its converse (Q then P) and its contrapositive (not-Q then not-P, which is always equivalent to the original), and quantifiers ("for all" ∀ versus "there exists" ∃). This rigour is what separates mathematics from empirical science: a proven theorem is true forever.',
+    bullets: [
+      'Proof establishes truth with certainty for all cases from axioms',
+      'Direct proof: assume hypothesis, derive conclusion step by step',
+      'Contradiction: assume the statement false, derive an impossibility (e.g. √2 irrational)',
+      'Induction: prove base case, then that truth at n forces truth at n+1',
+      'A statement and its contrapositive (not-Q ⇒ not-P) are always logically equivalent',
+    ],
+    example: 'To prove √2 is irrational: assume √2 = a/b in lowest terms. Then 2b² = a², so a is even, a = 2k, giving 2b² = 4k², b² = 2k² — so b is also even. But then a/b was not in lowest terms — a contradiction. Therefore √2 is irrational.',
+    quiz: [
+      { id: 'math-11-q1', question: 'The defining activity of university-level mathematics is:', options: ['Faster arithmetic', 'Rigorous proof — establishing truth for all cases from axioms', 'Using calculators', 'Memorising formulae'], correctIndex: 1,
+        why: 'Degree maths shifts from computing answers to proving statements with total logical certainty — the central intellectual change.' },
+      { id: 'math-11-q2', question: 'Proof by contradiction works by:', options: ['Checking many examples', 'Assuming the statement is false and deriving an impossibility', 'Drawing a graph', 'Assuming it is true'], correctIndex: 1,
+        why: 'If assuming the negation forces a logical impossibility, the original statement must be true — as in the classic √2 irrationality proof.' },
+      { id: 'math-11-q3', question: 'Proof by induction requires proving a base case and then that:', options: ['The statement holds for one large number', 'Truth at n implies truth at n+1', 'The converse is true', 'A counterexample exists'], correctIndex: 1,
+        why: 'The inductive step (n ⇒ n+1) plus a base case topples the whole infinite chain, like dominoes, proving it for all natural numbers.' },
+      { id: 'math-11-q4', question: 'To disprove the universal claim "all X are Y", it suffices to:', options: ['Prove it by induction', 'Find a single counterexample', 'Check the first ten cases', 'Assume it is true'], correctIndex: 1,
+        why: 'One genuine counterexample is enough to destroy a universal claim, whereas no number of confirming examples could ever prove one.' },
+      { id: 'math-11-q5', question: 'The contrapositive of "if P then Q" is:', options: ['If Q then P', 'If not-Q then not-P', 'If not-P then not-Q', 'P and Q'], correctIndex: 1,
+        why: 'The contrapositive (not-Q ⇒ not-P) is always logically equivalent to the original — unlike the converse (Q ⇒ P), which is not.' },
+    ],
+  },
+  {
+    id: 'math-12', nodeId: 'maths_basics', order: 12, title: 'Linear Algebra — Vectors and Matrices', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'Linear algebra is the mathematics of vectors, matrices, and linear transformations — arguably the most widely applied branch of maths, underpinning computer graphics, machine learning, quantum mechanics, and engineering. A vector is a quantity with magnitude and direction (or simply an ordered list of numbers); vectors can be added and scaled. A matrix is a rectangular array of numbers that represents a linear transformation — a mapping that stretches, rotates, or shears space while keeping lines straight and the origin fixed. Matrix multiplication composes transformations (doing one then another), and is famously non-commutative: AB generally ≠ BA, because the order of transformations matters. The determinant of a matrix measures how it scales area/volume, and whether it is invertible (a zero determinant means the transformation collapses space and cannot be undone). Systems of linear equations become the single matrix equation Ax = b, solvable via the inverse or elimination. Eigenvectors — special vectors a transformation only stretches, not rotates — reveal a transformation\'s fundamental axes and are central to data science (principal component analysis) and physics.',
+    bullets: [
+      'Vectors have magnitude and direction; they can be added and scaled',
+      'A matrix represents a linear transformation (stretch, rotate, shear)',
+      'Matrix multiplication composes transformations and is non-commutative (AB ≠ BA)',
+      'The determinant measures area/volume scaling; zero means non-invertible',
+      'Eigenvectors are only stretched (not rotated) by a transformation — its natural axes',
+    ],
+    example: 'Systems like 2x + y = 5, x − y = 1 become Ax = b with A = [[2,1],[1,−1]]. Because det(A) = −3 ≠ 0, A is invertible and the system has a unique solution.',
+    quiz: [
+      { id: 'math-12-q1', question: 'A matrix is best understood as representing:', options: ['A single number', 'A linear transformation of space', 'A probability', 'A curved line'], correctIndex: 1,
+        why: 'Beyond being an array of numbers, a matrix encodes a linear transformation — how it stretches, rotates, or shears vectors while keeping lines straight.' },
+      { id: 'math-12-q2', question: 'Matrix multiplication is "non-commutative", meaning:', options: ['AB always equals BA', 'AB generally does not equal BA', 'It cannot be done', 'Order never matters'], correctIndex: 1,
+        why: 'Because matrices compose transformations, the order matters — rotating then stretching differs from stretching then rotating, so AB ≠ BA in general.' },
+      { id: 'math-12-q3', question: 'A matrix with a determinant of zero is:', options: ['Invertible', 'Non-invertible (it collapses space)', 'The identity matrix', 'A vector'], correctIndex: 1,
+        why: 'A zero determinant means the transformation squashes space to a lower dimension, losing information — so it cannot be reversed (no inverse).' },
+      { id: 'math-12-q4', question: 'An eigenvector of a transformation is a vector that is:', options: ['Rotated 90°', 'Only scaled (stretched or shrunk), not rotated', 'Always zero', 'Deleted by the matrix'], correctIndex: 1,
+        why: 'Eigenvectors keep their direction under the transformation, being merely scaled by their eigenvalue — revealing the transformation\'s natural axes, key to PCA and physics.' },
+      { id: 'math-12-q5', question: 'A system of linear equations can be written compactly as:', options: ['Ax = b (a matrix equation)', 'x² = b', 'A + b', 'x/A'], correctIndex: 0,
+        why: 'Collecting coefficients into matrix A, unknowns into vector x, and constants into b turns a whole system into the single equation Ax = b.' },
+    ],
+  },
+  {
+    id: 'math-13', nodeId: 'maths_basics', order: 13, title: 'Limits and Introduction to Analysis', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'Real analysis is the rigorous foundation beneath calculus — it makes precise the intuitive ideas of "getting arbitrarily close" that A-level uses loosely. The central concept is the limit, defined by the famous epsilon–delta (ε–δ) definition: the limit of f(x) as x → a is L if, for every tolerance ε > 0 (however small), there exists a δ > 0 such that whenever x is within δ of a, f(x) is within ε of L. This banishes vague talk of "approaching" and replaces it with a precise challenge-and-response. From limits, everything is rebuilt rigorously: continuity means small input changes give small output changes (no jumps); the derivative becomes the properly-defined limit of a difference quotient; and convergence of sequences and series gets exact meaning. Analysis also confronts the strange properties of infinity and the real numbers — that the rationals have "gaps" the reals fill (completeness), and that some infinities are larger than others (Cantor showed the reals are uncountable). This rigour matters because intuition fails at infinity: analysis is where mathematics learns to trust proof over picture.',
+    bullets: [
+      'Analysis provides the rigorous foundation calculus rests on',
+      'The ε–δ definition makes "approaching a limit" precise: for every ε there is a δ',
+      'Continuity = no jumps; small input changes give small output changes',
+      'The derivative is rigorously the limit of a difference quotient',
+      'Completeness (reals fill the rationals\' gaps) and uncountability of the reals',
+    ],
+    example: 'To prove lim(x→2) 3x = 6 rigorously: given any ε > 0, choose δ = ε/3. Then |x − 2| < δ implies |3x − 6| = 3|x − 2| < 3δ = ε. The challenge (ε) is always met by a response (δ).',
+    quiz: [
+      { id: 'math-13-q1', question: 'Real analysis primarily provides:', options: ['Faster ways to calculate', 'The rigorous logical foundation underneath calculus', 'New calculator methods', 'Geometry proofs'], correctIndex: 1,
+        why: 'Analysis rebuilds calculus on rigorous definitions, replacing intuitive "approaching" with precise, provable statements.' },
+      { id: 'math-13-q2', question: 'The epsilon–delta definition makes precise the idea of:', options: ['Multiplication', 'A limit — approaching a value arbitrarily closely', 'Rounding', 'A matrix'], correctIndex: 1,
+        why: 'ε–δ formalises limits: for every tolerance ε you can find a δ guaranteeing f(x) stays within ε of L — exactness replacing hand-waving.' },
+      { id: 'math-13-q3', question: 'A function is continuous at a point if:', options: ['It has a maximum there', 'Small changes in input produce small changes in output (no jumps)', 'Its derivative is zero', 'It is a straight line'], correctIndex: 1,
+        why: 'Continuity means no sudden jumps — the output can be kept as close as desired by keeping the input close enough, made precise via limits.' },
+      { id: 'math-13-q4', question: 'The "completeness" of the real numbers refers to the fact that they:', options: ['Are finite', 'Fill in the gaps that the rational numbers leave', 'Are all integers', 'Cannot be added'], correctIndex: 1,
+        why: 'Rationals have gaps (e.g. no rational equals √2); the reals are complete — they contain all the limit points, with no holes.' },
+      { id: 'math-13-q5', question: 'Cantor showed that the real numbers are "uncountable", meaning:', options: ['They cannot be counted at all', 'Their infinity is strictly larger than that of the integers', 'There are finitely many', 'They equal the rationals'], correctIndex: 1,
+        why: 'Cantor\'s diagonal argument proved the reals cannot be listed like the integers — a strictly bigger infinity, showing some infinities exceed others.' },
+    ],
+  },
+
+  // ══ SCIENCE — ACADEMIC LADDER (A-LEVEL → DEGREE) ═════════════════════════════
+  // Foundation & GCSE = sci-1..5 above (method, forces, atoms, cells, energy).
+
+  // ── A-LEVEL tier ──
+  {
+    id: 'sci-6', nodeId: 'science_foundations', order: 6, title: 'Electricity and Circuits', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    whyItMatters: 'Electricity powers the modern world, yet most people can\'t explain what current actually is — understanding it demystifies everything from your phone charger to the national grid.',
+    explanation: 'Electric current is the flow of charge (electrons) around a circuit, measured in amperes (amps). It is driven by potential difference (voltage), the "push" measured in volts, and opposed by resistance, measured in ohms. These three are tied by Ohm\'s law: V = I × R (voltage = current × resistance). Circuits come in two arrangements. In series, components share one loop — the same current flows through all, but the voltage is divided between them; add a bulb and all dim. In parallel, components sit on separate branches — each gets the full voltage and the current divides; one branch can break without stopping the others (which is why homes are wired in parallel). Electrical power, the rate of energy transfer, is P = V × I (watts). Understanding these relationships lets you predict and design circuits rather than treating electricity as magic.',
+    bullets: [
+      'Current (amps) = flow of charge; potential difference (volts) = the driving "push"; resistance (ohms) opposes it',
+      'Ohm\'s law: V = I × R ties the three together',
+      'Series: one loop, same current, shared voltage — one break stops everything',
+      'Parallel: separate branches, full voltage each, current divides — homes are wired this way',
+      'Electrical power P = V × I (watts) is the rate of energy transfer',
+    ],
+    example: 'A 12V battery drives current through a 4Ω resistor. By Ohm\'s law, I = V/R = 12/4 = 3A, and power dissipated P = V×I = 12×3 = 36W.',
+    quiz: [
+      { id: 'sci-6-q1', question: 'Ohm\'s law states that:', options: ['V = I / R', 'V = I × R', 'I = V × R', 'R = V × I'], correctIndex: 1,
+        why: 'Voltage equals current times resistance (V = IR). Rearranging gives I = V/R and R = V/I — the three forms you use to solve circuits.' },
+      { id: 'sci-6-q2', question: 'Electric current is fundamentally:', options: ['The push that drives a circuit', 'The flow of electric charge', 'The opposition to flow', 'Stored energy'], correctIndex: 1,
+        why: 'Current is the rate of flow of charge (electrons) — voltage is the push that drives it, and resistance opposes it.' },
+      { id: 'sci-6-q3', question: 'In a series circuit, adding more bulbs causes each to:', options: ['Get brighter', 'Dim, because they share the voltage and resistance rises', 'Stay the same', 'Turn off'], correctIndex: 1,
+        why: 'Series components share one loop; more of them raises total resistance and splits the voltage further, so each bulb dims.' },
+      { id: 'sci-6-q4', question: 'Homes are wired in parallel mainly so that:', options: ['Everything shares one current', 'Each device gets full voltage and one failing doesn\'t stop the rest', 'Less wire is needed', 'Voltage adds up'], correctIndex: 1,
+        why: 'Parallel branches each receive the full mains voltage and operate independently — switching off one lamp doesn\'t darken the whole house.' },
+      { id: 'sci-6-q5', question: 'A device rated at 6V drawing 2A uses power of:', options: ['3W', '12W', '8W', '4W'], correctIndex: 1,
+        why: 'Power P = V × I = 6 × 2 = 12 watts — the rate at which it transfers electrical energy.' },
+    ],
+  },
+  {
+    id: 'sci-7', nodeId: 'science_foundations', order: 7, title: 'Chemical Bonding and Reactions', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Atoms bond to achieve stable, full outer electron shells, and the type of bond determines a substance\'s properties. Ionic bonding transfers electrons from a metal to a non-metal, creating charged ions held by electrostatic attraction — giving hard, high-melting solids that conduct when molten or dissolved (e.g. salt). Covalent bonding shares electrons between non-metals, forming molecules — often low-melting and non-conducting (e.g. water, methane). Metallic bonding is a lattice of positive ions in a "sea" of delocalised electrons, explaining why metals conduct and bend. Chemical reactions rearrange these bonds: reactants become products while atoms are conserved (nothing is created or destroyed — the basis of balancing equations). The mole is chemistry\'s counting unit (6.02 × 10²³ particles), letting chemists weigh out exact numbers of atoms. Reaction rates rise with temperature, concentration, surface area, and catalysts, all explained by collision theory: more frequent, more energetic collisions mean faster reactions.',
+    bullets: [
+      'Atoms bond to complete their outer electron shells',
+      'Ionic (metal + non-metal, electron transfer): hard, high-melting, conduct when molten/dissolved',
+      'Covalent (non-metals, shared electrons): molecules, often low-melting, non-conducting',
+      'Metallic (ion lattice + delocalised electrons): conductive and malleable',
+      'Reactions conserve atoms; rates rise with temperature, concentration, surface area, catalysts (collision theory)',
+    ],
+    example: 'Sodium (a metal) gives an electron to chlorine (a non-metal), forming Na⁺ and Cl⁻ ions that attract into salt (NaCl) — an ionic compound that dissolves and then conducts electricity.',
+    quiz: [
+      { id: 'sci-7-q1', question: 'Atoms form chemical bonds primarily to:', options: ['Gain mass', 'Achieve stable, full outer electron shells', 'Become radioactive', 'Change colour'], correctIndex: 1,
+        why: 'A full outer shell is energetically stable; bonding (transferring or sharing electrons) is how atoms reach that stability.' },
+      { id: 'sci-7-q2', question: 'Ionic bonding involves:', options: ['Sharing electrons between non-metals', 'Transferring electrons from a metal to a non-metal', 'A sea of delocalised electrons', 'No electrons at all'], correctIndex: 1,
+        why: 'Ionic bonds transfer electrons, creating oppositely charged ions held by electrostatic attraction — distinct from covalent (sharing) and metallic (delocalised) bonding.' },
+      { id: 'sci-7-q3', question: 'Metals conduct electricity and bend because they have:', options: ['Shared pairs of electrons', 'A lattice of ions in a sea of delocalised electrons', 'Transferred all their electrons', 'No bonding'], correctIndex: 1,
+        why: 'The free-moving delocalised electrons carry charge (conduction), and the layers of ions can slide without breaking bonds (malleability).' },
+      { id: 'sci-7-q4', question: 'In any chemical reaction, the total number of atoms:', options: ['Increases', 'Is conserved — atoms are rearranged, not created or destroyed', 'Decreases', 'Becomes energy'], correctIndex: 1,
+        why: 'Conservation of mass means atoms are only rearranged into new products — which is exactly why chemical equations must balance.' },
+      { id: 'sci-7-q5', question: 'According to collision theory, a reaction speeds up when:', options: ['The temperature drops', 'Particles collide more frequently and energetically', 'Concentration falls', 'A catalyst is removed'], correctIndex: 1,
+        why: 'Higher temperature, concentration, surface area, and catalysts all increase the frequency or energy of successful collisions, raising the rate.' },
+    ],
+  },
+  {
+    id: 'sci-8', nodeId: 'science_foundations', order: 8, title: 'Genetics, Evolution and Ecology', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Life\'s information system runs on DNA. Genes (sections of DNA) are transcribed and translated to build proteins, which determine an organism\'s traits — the "central dogma" of biology (DNA → RNA → protein). Inheritance passes genes from parents to offspring: we carry two copies (alleles) of each gene, and dominant alleles mask recessive ones, which is why traits can skip generations. Variation within a population arises from mutation and sexual reproduction, and this variation is the raw material of evolution by natural selection (Darwin): individuals better suited to their environment survive and reproduce more, passing on advantageous traits, so populations change over generations. Given enough time and isolation, this produces new species. Ecology zooms out to whole systems: organisms interact through food chains and webs, energy flows from producers (plants capturing sunlight) up through consumers (losing ~90% at each step), and nutrients cycle. Understanding these levels — molecule, organism, population, ecosystem — is understanding how life works and changes.',
+    bullets: [
+      'Central dogma: DNA → RNA → protein; genes build the proteins that determine traits',
+      'We carry two alleles per gene; dominant alleles mask recessive ones (traits can skip generations)',
+      'Variation (mutation + sexual reproduction) is the raw material of evolution',
+      'Natural selection: better-suited individuals survive and reproduce, shifting populations over time',
+      'Ecology: energy flows up food chains (~90% lost per step); nutrients cycle through ecosystems',
+    ],
+    example: 'Peppered moths: when industrial soot darkened trees, dark moths were better camouflaged from birds, survived more, and became common — natural selection observed within decades.',
+    quiz: [
+      { id: 'sci-8-q1', question: 'The "central dogma" of molecular biology is the flow:', options: ['Protein → RNA → DNA', 'DNA → RNA → protein', 'RNA → DNA → protein', 'DNA → protein directly'], correctIndex: 1,
+        why: 'Genetic information flows DNA → RNA → protein: DNA is transcribed to RNA, which is translated into the proteins that build and run the organism.' },
+      { id: 'sci-8-q2', question: 'A recessive trait can appear to "skip a generation" because:', options: ['Genes disappear then return', 'It is masked whenever a dominant allele is present', 'Mutation recreates it', 'It only affects grandparents'], correctIndex: 1,
+        why: 'A recessive allele\'s trait only shows when both alleles are recessive; a dominant allele masks it, so carriers pass it on silently until two meet.' },
+      { id: 'sci-8-q3', question: 'The raw material on which natural selection acts is:', options: ['Identical organisms', 'Variation between individuals', 'The environment alone', 'Learned behaviour'], correctIndex: 1,
+        why: 'Selection needs differences to act on; variation from mutation and sexual reproduction supplies the range of traits that survival then filters.' },
+      { id: 'sci-8-q4', question: 'Natural selection causes populations to change because:', options: ['Individuals choose to adapt', 'Better-suited individuals survive and reproduce more, passing on their traits', 'All traits are inherited equally', 'Environments never change'], correctIndex: 1,
+        why: 'Differential survival and reproduction means advantageous heritable traits become more common over generations — the engine of evolution.' },
+      { id: 'sci-8-q5', question: 'Roughly how much energy is lost between levels of a food chain?', options: ['About 10%', 'About 90%', 'None', 'All of it'], correctIndex: 1,
+        why: 'Only ~10% of energy transfers to the next level (the rest is lost as heat, movement, waste), which is why food chains rarely have more than 4–5 links.' },
+    ],
+  },
+
+  // ── DEGREE tier ──
+  {
+    id: 'sci-9', nodeId: 'science_foundations', order: 9, title: 'Quantum Mechanics and Relativity', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    whyItMatters: 'The two great pillars of modern physics overturned common sense about reality itself — and yet they power GPS, lasers, and every computer chip you own.',
+    explanation: 'Twentieth-century physics revealed that the universe behaves nothing like everyday intuition at extremes. Quantum mechanics governs the very small: energy comes in discrete packets (quanta), particles like electrons show wave-particle duality (behaving as both waves and particles depending on how they\'re measured), and Heisenberg\'s uncertainty principle states you cannot simultaneously know a particle\'s exact position and momentum — not from imperfect instruments, but as a fundamental feature of reality. Quantum states are probabilistic until measured. Einstein\'s special relativity governs the very fast: the speed of light is constant for all observers, which forces space and time themselves to be relative — moving clocks run slow (time dilation) and moving objects contract, and mass and energy are equivalent (E = mc²). General relativity then reframes gravity not as a force but as the curvature of spacetime caused by mass — a heavy object bends the "fabric" of spacetime, and things follow those curves. These theories are not speculation: GPS satellites must correct for relativistic time dilation, and quantum mechanics underpins all modern electronics.',
+    bullets: [
+      'Quantum: energy is quantised; particles show wave-particle duality; states are probabilistic until measured',
+      'Heisenberg uncertainty: position and momentum can\'t both be known exactly — a fundamental limit',
+      'Special relativity: light speed is constant for all observers, so time and space are relative (E = mc²)',
+      'General relativity: gravity is the curvature of spacetime caused by mass, not a force',
+      'Real applications: GPS corrects for time dilation; quantum theory underpins all electronics',
+    ],
+    example: 'GPS satellites\' clocks tick faster than ground clocks (weaker gravity) and slower (high speed); without applying general and special relativity corrections, GPS would drift ~10 km off per day.',
+    quiz: [
+      { id: 'sci-9-q1', question: 'Wave-particle duality means that particles like electrons:', options: ['Are always waves', 'Behave as both waves and particles depending on how they are measured', 'Do not exist', 'Are only particles'], correctIndex: 1,
+        why: 'Quantum objects show wave-like interference in some experiments and particle-like impacts in others — neither picture alone is complete.' },
+      { id: 'sci-9-q2', question: 'Heisenberg\'s uncertainty principle states that:', options: ['Scientists make measurement errors', 'You cannot simultaneously know a particle\'s exact position and momentum', 'Everything is predictable', 'Particles have no properties'], correctIndex: 1,
+        why: 'It\'s a fundamental limit of nature, not a technological one — pinning down position more precisely inherently blurs momentum, and vice versa.' },
+      { id: 'sci-9-q3', question: 'A core postulate of special relativity is that:', options: ['Time is absolute', 'The speed of light is the same for all observers', 'Nothing can move', 'Mass is constant'], correctIndex: 1,
+        why: 'Light\'s constant speed for everyone forces space and time to be relative — leading to time dilation, length contraction, and E = mc².' },
+      { id: 'sci-9-q4', question: 'In general relativity, gravity is understood as:', options: ['A pulling force between masses', 'The curvature of spacetime caused by mass', 'A type of magnetism', 'An illusion'], correctIndex: 1,
+        why: 'Einstein reframed gravity: mass warps the geometry of spacetime, and objects simply follow the straightest paths through that curved geometry.' },
+      { id: 'sci-9-q5', question: 'The equation E = mc² expresses that:', options: ['Energy and light are the same', 'Mass and energy are equivalent and interconvertible', 'Speed causes mass', 'Energy is always conserved separately'], correctIndex: 1,
+        why: 'Mass and energy are two forms of the same thing; a tiny mass converts to enormous energy (c² is huge), the principle behind nuclear power and the Sun.' },
+    ],
+  },
+  {
+    id: 'sci-10', nodeId: 'science_foundations', order: 10, title: 'Thermodynamics and Entropy', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'Thermodynamics governs energy, heat, and the direction of change — and its laws are among the most universal in all of science. The first law is conservation of energy: energy is never created or destroyed, only converted between forms (heat, work, chemical, etc.). The second law is subtler and profound: the total entropy of an isolated system always increases. Entropy is often described as "disorder," but more precisely it measures the number of microscopic arrangements consistent with a system\'s state — and there are vastly more disordered arrangements than ordered ones, so systems naturally evolve toward disorder. This is why heat flows from hot to cold (never spontaneously the reverse), why perpetual motion machines are impossible, and why no engine can be 100% efficient — some energy always disperses as unusable heat. The second law also gives time its direction: the "arrow of time" points the way entropy increases, distinguishing past from future in a universe whose other laws are time-symmetric. Life appears to defy this by creating order, but it doesn\'t: organisms maintain local order only by increasing entropy in their surroundings (releasing heat and waste), so the universe\'s total entropy still rises.',
+    bullets: [
+      'First law: energy is conserved — only converted between forms, never created or destroyed',
+      'Second law: total entropy of an isolated system always increases',
+      'Entropy measures the number of microscopic arrangements — disorder is overwhelmingly more likely',
+      'Consequences: heat flows hot→cold, no perpetual motion, no engine is 100% efficient',
+      'Entropy gives time its arrow; life maintains local order by increasing entropy around it',
+    ],
+    example: 'A drop of ink disperses evenly through water and never spontaneously re-gathers — there are astronomically more "spread out" arrangements than "concentrated" ones, so entropy increases.',
+    quiz: [
+      { id: 'sci-10-q1', question: 'The first law of thermodynamics states that energy:', options: ['Always increases', 'Is conserved — only converted, never created or destroyed', 'Turns into entropy', 'Can be destroyed'], correctIndex: 1,
+        why: 'The first law is conservation of energy: the total amount is fixed, changing only in form (heat, work, chemical, and so on).' },
+      { id: 'sci-10-q2', question: 'The second law of thermodynamics says that the total entropy of an isolated system:', options: ['Stays constant', 'Always increases', 'Always decreases', 'Is zero'], correctIndex: 1,
+        why: 'Entropy of an isolated system tends to increase — the fundamental reason processes have a preferred direction and can\'t spontaneously reverse.' },
+      { id: 'sci-10-q3', question: 'Entropy is most precisely described as:', options: ['Heat energy', 'The number of microscopic arrangements consistent with a state', 'Temperature', 'Wasted fuel'], correctIndex: 1,
+        why: 'Beyond loose "disorder," entropy counts microstates: disordered configurations vastly outnumber ordered ones, so systems drift toward them.' },
+      { id: 'sci-10-q4', question: 'No heat engine can be 100% efficient because:', options: ['Of friction alone', 'The second law requires some energy to disperse as unusable heat', 'Engines are poorly built', 'Energy is destroyed'], correctIndex: 1,
+        why: 'The second law forbids fully converting heat into work; some must always be dumped to a cold reservoir, capping efficiency below 100%.' },
+      { id: 'sci-10-q5', question: 'Living organisms create local order without breaking the second law because they:', options: ['Are exempt from physics', 'Increase entropy in their surroundings (releasing heat and waste)', 'Destroy entropy', 'Do not use energy'], correctIndex: 1,
+        why: 'Life maintains internal order at the cost of exporting greater disorder to its environment, so the universe\'s total entropy still rises.' },
+    ],
+  },
+
+  // ══ HUMAN BIOLOGY — ACADEMIC LADDER (A-LEVEL → DEGREE) ═══════════════════════
+  // Foundation & GCSE = bio-1..5 above (cells/DNA, cardiovascular, immune, hormones, brain).
+
+  // ── A-LEVEL tier ──
+  {
+    id: 'bio-6', nodeId: 'human_biology', order: 6, title: 'Genetics and Inheritance', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    whyItMatters: 'Genetics explains why you resemble your parents, why some diseases run in families, and increasingly drives medicine — from cancer treatment to gene therapy.',
+    explanation: 'Inheritance follows rules first worked out by Gregor Mendel. Each gene comes in versions called alleles, and you inherit two — one from each parent. Your genotype is the pair of alleles you carry; your phenotype is the trait actually expressed. Dominant alleles (written uppercase) mask recessive ones (lowercase): a person with one dominant and one recessive allele shows the dominant trait but is a "carrier" of the recessive. Punnett squares predict offspring ratios: crossing two carriers (Bb × Bb) gives a classic 3:1 ratio of dominant to recessive phenotypes, and a 1:2:1 genotype ratio. Not all inheritance is this simple — codominance (both alleles expressed, like AB blood type), sex-linkage (genes on the X chromosome, why colour-blindness is commoner in males), and polygenic traits (height, skin colour — controlled by many genes) add richness. Genetic disorders arise from faulty alleles (cystic fibrosis, recessive) or chromosome errors (Down syndrome, an extra chromosome 21).',
+    bullets: [
+      'Two alleles per gene, one from each parent; genotype = alleles carried, phenotype = trait shown',
+      'Dominant alleles mask recessive ones; carriers have one of each',
+      'Punnett squares predict ratios — two carriers (Bb × Bb) give 3:1 phenotype ratio',
+      'Beyond simple dominance: codominance (AB blood), sex-linkage (X chromosome), polygenic traits',
+      'Genetic disorders from faulty alleles (cystic fibrosis) or chromosome errors (Down syndrome)',
+    ],
+    example: 'Two brown-eyed parents each carrying a recessive blue allele (Bb × Bb) can have a blue-eyed child (bb): the Punnett square predicts a 1-in-4 chance despite neither parent being blue-eyed.',
+    quiz: [
+      { id: 'bio-6-q1', question: 'The difference between genotype and phenotype is that genotype is:', options: ['The trait you can see', 'The alleles you carry, while phenotype is the trait expressed', 'Always dominant', 'The same as phenotype'], correctIndex: 1,
+        why: 'Genotype is the genetic makeup (the alleles); phenotype is the observable result. Two genotypes (BB and Bb) can give the same phenotype.' },
+      { id: 'bio-6-q2', question: 'Crossing two carriers (Bb × Bb) gives a phenotype ratio of approximately:', options: ['1:1', '3:1 dominant to recessive', 'All dominant', 'All recessive'], correctIndex: 1,
+        why: 'The Punnett square gives BB, Bb, Bb, bb — three showing the dominant trait to one recessive, the classic 3:1 ratio.' },
+      { id: 'bio-6-q3', question: 'A person showing a dominant trait but carrying one recessive allele is:', options: ['Unaffected and cannot pass it on', 'A carrier who can pass the recessive allele to offspring', 'Purely recessive', 'Impossible'], correctIndex: 1,
+        why: 'Carriers express the dominant trait but silently carry the recessive allele, passing it on — which is how recessive conditions appear from unaffected parents.' },
+      { id: 'bio-6-q4', question: 'Colour-blindness is more common in males because it is:', options: ['Dominant', 'Sex-linked — carried on the X chromosome, of which males have only one', 'Caused by diet', 'A dominant Y-linked trait'], correctIndex: 1,
+        why: 'The gene sits on the X chromosome; males (XY) have one X, so a single recessive allele shows, whereas females (XX) usually have a second X to mask it.' },
+      { id: 'bio-6-q5', question: 'Traits like human height, controlled by many genes, are described as:', options: ['Codominant', 'Polygenic', 'Sex-linked', 'Recessive'], correctIndex: 1,
+        why: 'Polygenic traits result from many genes acting together, producing continuous variation (a range of heights) rather than distinct categories.' },
+    ],
+  },
+  {
+    id: 'bio-7', nodeId: 'human_biology', order: 7, title: 'Evolution and Natural Selection', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Evolution is the change in heritable characteristics of populations over generations, and natural selection (Darwin and Wallace) is its main mechanism. The logic is inescapable: organisms produce more offspring than can survive; individuals vary, and some variation is heritable; those with advantageous traits for their environment survive and reproduce more ("survival of the fittest," where fitness means reproductive success, not strength); so advantageous alleles become more common over generations. Given enough time and reproductive isolation, populations diverge until they can no longer interbreed — speciation. The evidence is overwhelming and multi-stranded: the fossil record shows transitional forms and change over time; comparative anatomy reveals homologous structures (the same bone pattern in a human arm, bat wing, and whale flipper — inherited from a common ancestor); embryology shows shared early development; and DNA provides the decisive modern proof — the more closely related two species, the more similar their genomes. Antibiotic resistance and pesticide resistance are natural selection happening now, in real time, with direct consequences for medicine and agriculture.',
+    bullets: [
+      'Evolution = change in heritable traits of populations over generations; natural selection is the mechanism',
+      'Overproduction + heritable variation + differential survival → advantageous alleles spread',
+      '"Fitness" means reproductive success, not physical strength',
+      'Isolation over time produces speciation (populations that can no longer interbreed)',
+      'Evidence: fossils, homologous structures, embryology, and decisively DNA; antibiotic resistance is it happening now',
+    ],
+    example: 'Overuse of antibiotics kills susceptible bacteria but leaves resistant ones to multiply, so resistant strains (like MRSA) spread — natural selection observed in hospitals within years.',
+    quiz: [
+      { id: 'bio-7-q1', question: 'In evolutionary biology, an organism\'s "fitness" refers to its:', options: ['Physical strength', 'Reproductive success — how many surviving offspring it produces', 'Speed', 'Body size'], correctIndex: 1,
+        why: 'Fitness means passing on genes: an individual that survives and reproduces more is "fitter," regardless of strength or size.' },
+      { id: 'bio-7-q2', question: 'Homologous structures (like the similar bone patterns in a human arm and bat wing) are evidence of:', options: ['Coincidence', 'Descent from a common ancestor', 'Identical environments', 'Recent design'], correctIndex: 1,
+        why: 'The same underlying bone arrangement adapted to different uses points to a shared ancestor whose limb structure was inherited and modified.' },
+      { id: 'bio-7-q3', question: 'The decisive modern evidence for how closely two species are related is:', options: ['Their size', 'The similarity of their DNA', 'Their colour', 'Where they live'], correctIndex: 1,
+        why: 'Genome comparison provides precise, quantitative evidence of relatedness — the more similar the DNA, the more recent the common ancestor.' },
+      { id: 'bio-7-q4', question: 'Speciation typically requires:', options: ['A single generation', 'Reproductive isolation over many generations until interbreeding stops', 'Identical populations', 'No genetic variation'], correctIndex: 1,
+        why: 'When populations are separated and diverge genetically over time, they eventually can no longer interbreed — becoming distinct species.' },
+      { id: 'bio-7-q5', question: 'Antibiotic resistance in bacteria is an example of:', options: ['Bacteria choosing to adapt', 'Natural selection occurring in real time', 'A laboratory error', 'Evolution being disproven'], correctIndex: 1,
+        why: 'Antibiotics select for pre-existing resistant variants, which then dominate — a direct, observable demonstration of natural selection with major medical stakes.' },
+    ],
+  },
+  {
+    id: 'bio-8', nodeId: 'human_biology', order: 8, title: 'Enzymes and Biochemistry', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Life runs on chemistry, and enzymes are the catalysts that make it possible. An enzyme is a protein that speeds up a specific biochemical reaction by lowering its activation energy — without being used up. Each enzyme has a precisely shaped active site that fits its substrate like a lock and key (or more accurately, an "induced fit" that moulds slightly around it), which is why enzymes are highly specific — one enzyme, one reaction. Their activity depends sharply on conditions: temperature (rising heat speeds reactions until the enzyme denatures — its shape irreversibly unravels, usually above ~40°C in humans), pH (each enzyme has an optimum; stomach enzymes work in acid, others don\'t), and substrate concentration. This is why fever is dangerous and why the body tightly regulates its internal environment. Enzymes drive metabolism — the sum of all reactions that keep you alive — including respiration (releasing energy from glucose) and digestion (breaking large molecules into absorbable ones). The four great classes of biological molecules — carbohydrates, lipids, proteins, and nucleic acids — are built and broken down by enzyme-controlled reactions, making enzymes the workhorses of every living process.',
+    bullets: [
+      'Enzymes are protein catalysts that lower activation energy without being used up',
+      'Active site fits substrate specifically (lock-and-key / induced fit) — one enzyme, one reaction',
+      'Activity depends on temperature and pH; excess heat denatures (irreversibly unfolds) the enzyme',
+      'Enzymes drive metabolism — respiration, digestion, and synthesis',
+      'They build and break the four biomolecule classes: carbohydrates, lipids, proteins, nucleic acids',
+    ],
+    example: 'Amylase in saliva breaks starch into sugars — you can taste it: hold a piece of bread in your mouth and it slowly turns sweet as amylase works, but only near body temperature and neutral pH.',
+    quiz: [
+      { id: 'bio-8-q1', question: 'An enzyme speeds up a reaction by:', options: ['Adding energy', 'Lowering the activation energy needed, without being used up', 'Raising the temperature', 'Being consumed as fuel'], correctIndex: 1,
+        why: 'Enzymes are catalysts: they lower the energy barrier so reactions proceed faster, and emerge unchanged to catalyse again.' },
+      { id: 'bio-8-q2', question: 'Enzymes are highly specific because:', options: ['They are very small', 'Their active site fits only a particular substrate shape', 'They work on everything', 'They are made of fat'], correctIndex: 1,
+        why: 'The precisely shaped active site accommodates only its matching substrate (lock-and-key / induced fit), so each enzyme catalyses one specific reaction.' },
+      { id: 'bio-8-q3', question: 'When an enzyme is heated too much, it "denatures", meaning:', options: ['It works faster forever', 'Its shape irreversibly unravels and it stops working', 'It multiplies', 'It changes into a sugar'], correctIndex: 1,
+        why: 'Excess heat breaks the bonds holding the enzyme\'s shape; the active site deforms permanently, so it can no longer bind substrate — why high fever is dangerous.' },
+      { id: 'bio-8-q4', question: 'Different enzymes work best at different pH values because:', options: ['pH has no effect', 'Each enzyme has an optimum pH that maintains its active site shape', 'Acid destroys all enzymes', 'They prefer neutral only'], correctIndex: 1,
+        why: 'pH affects the bonds shaping the active site; each enzyme has an optimum (stomach protease in acid, others near neutral) where its shape and activity peak.' },
+      { id: 'bio-8-q5', question: 'The sum of all the enzyme-controlled reactions keeping an organism alive is called:', options: ['Digestion', 'Metabolism', 'Respiration', 'Photosynthesis'], correctIndex: 1,
+        why: 'Metabolism encompasses all life\'s chemical reactions — building up and breaking down molecules — nearly all of which enzymes catalyse and control.' },
+    ],
+  },
+
+  // ── DEGREE tier ──
+  {
+    id: 'bio-9', nodeId: 'human_biology', order: 9, title: 'Molecular Biology and Gene Expression', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    whyItMatters: 'Molecular biology is the foundation of modern medicine and biotech — from mRNA vaccines to CRISPR gene editing, it\'s where 21st-century breakthroughs are being made.',
+    explanation: 'Gene expression is the process by which the information in DNA is turned into functional products, and understanding its detail is the heart of modern biology. It has two main stages. Transcription: inside the nucleus, an enzyme (RNA polymerase) reads a gene and builds a complementary messenger RNA (mRNA) copy. Translation: the mRNA travels to a ribosome, which reads it in three-letter units called codons; each codon specifies an amino acid (via transfer RNA), and the amino acids link into a protein chain that folds into its functional shape. The genetic code is nearly universal across all life — evidence of common ancestry and the basis of genetic engineering (a human gene can be expressed in bacteria). Crucially, not all genes are active at once: gene regulation determines which genes are switched on in which cells, which is why a neuron and a liver cell, with identical DNA, are utterly different — they express different subsets of genes. Regulation involves transcription factors, and increasingly-understood epigenetic modifications (chemical tags on DNA that switch genes on/off without changing the sequence, and can even respond to environment and be inherited). Mutations — changes in DNA sequence — can alter proteins, causing disease or, rarely, providing the variation that fuels evolution.',
+    bullets: [
+      'Transcription: RNA polymerase copies a gene into messenger RNA (mRNA) in the nucleus',
+      'Translation: ribosomes read mRNA codons (3 letters) to assemble amino acids into a protein',
+      'The genetic code is near-universal across life — the basis of genetic engineering',
+      'Gene regulation switches genes on/off per cell type — why neurons and liver cells differ despite identical DNA',
+      'Epigenetics: chemical tags alter expression without changing the DNA sequence, and can respond to environment',
+    ],
+    example: 'mRNA vaccines exploit this system directly: they deliver mRNA coding for a viral protein, and your own ribosomes translate it, training your immune system — molecular biology turned into medicine.',
+    quiz: [
+      { id: 'bio-9-q1', question: 'During transcription:', options: ['A protein is built', 'A gene\'s DNA is copied into messenger RNA (mRNA)', 'DNA is replicated', 'mRNA is destroyed'], correctIndex: 1,
+        why: 'Transcription produces an mRNA copy of a gene, which then carries the instructions out to the ribosome for the next stage, translation.' },
+      { id: 'bio-9-q2', question: 'During translation, ribosomes read mRNA in units of three bases called:', options: ['Genes', 'Codons', 'Alleles', 'Chromosomes'], correctIndex: 1,
+        why: 'Each three-base codon specifies one amino acid; the ribosome reads codons in sequence to assemble the protein chain.' },
+      { id: 'bio-9-q3', question: 'A neuron and a liver cell differ despite having identical DNA because they:', options: ['Have different DNA after all', 'Express different subsets of their genes (gene regulation)', 'Lost some chromosomes', 'Mutated randomly'], correctIndex: 1,
+        why: 'Cell identity comes from which genes are switched on — regulation, not different DNA — the same genome running different programs.' },
+      { id: 'bio-9-q4', question: 'Epigenetic modifications affect an organism by:', options: ['Changing the DNA sequence', 'Switching genes on/off without altering the DNA sequence', 'Deleting chromosomes', 'Creating new genes'], correctIndex: 1,
+        why: 'Epigenetic tags (like methylation) change gene activity without editing the underlying sequence, can respond to environment, and are sometimes heritable.' },
+      { id: 'bio-9-q5', question: 'That the genetic code is nearly universal across all life:', options: ['Is a coincidence', 'Reflects common ancestry and enables genetic engineering across species', 'Prevents genetic engineering', 'Applies only to humans'], correctIndex: 1,
+        why: 'A shared code means a gene from one organism works in another — evidence of common descent and the foundation of inserting genes across species.' },
+    ],
+  },
+  {
+    id: 'bio-10', nodeId: 'human_biology', order: 10, title: 'Homeostasis and Physiology', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'Homeostasis is the maintenance of a stable internal environment despite external change, and it is the organising principle of physiology. The body regulates temperature, blood glucose, water and salt balance, blood pH, and more — each through negative feedback loops, where a deviation from the set point triggers a corrective response that restores balance, like a thermostat. Consider three examples in depth. Thermoregulation: if you overheat, receptors signal the hypothalamus, which triggers sweating and vasodilation (blood vessels widening to lose heat); if you\'re cold, you shiver and vessels constrict. Blood glucose control: after eating, rising glucose triggers the pancreas to release insulin, which drives cells to absorb glucose and the liver to store it; when glucose falls, glucagon does the reverse — a failure of this system is diabetes. Osmoregulation: the kidneys precisely control water balance, using the hormone ADH to adjust how much water is reabsorbed versus excreted, keeping blood concentration stable whether you drink litres or none. The nephron, the kidney\'s microscopic filtering unit, achieves this through filtration, reabsorption, and secretion. Positive feedback loops exist too but are rarer (childbirth contractions, blood clotting) — they amplify rather than stabilise, and must be self-limiting. Physiology is ultimately the study of how billions of cells cooperate to keep the whole organism\'s conditions within the narrow limits life requires.',
+    bullets: [
+      'Homeostasis maintains a stable internal environment via negative feedback (deviation triggers correction)',
+      'Thermoregulation: sweating/vasodilation to cool, shivering/vasoconstriction to warm — via the hypothalamus',
+      'Blood glucose: insulin lowers it (cells absorb, liver stores), glucagon raises it; failure is diabetes',
+      'Osmoregulation: kidneys use ADH to control water reabsorption, keeping blood concentration stable',
+      'Positive feedback (childbirth, clotting) amplifies and is rarer; must be self-limiting',
+    ],
+    example: 'After a sugary meal, blood glucose spikes; insulin is released within minutes, cells take up glucose, and levels return to normal within ~2 hours — negative feedback restoring the set point. In type 1 diabetes, absent insulin breaks this loop.',
+    quiz: [
+      { id: 'bio-10-q1', question: 'Homeostasis is maintained mainly through:', options: ['Positive feedback', 'Negative feedback loops that correct deviations from a set point', 'Random fluctuation', 'Constant change'], correctIndex: 1,
+        why: 'Negative feedback detects a deviation and triggers a response that reverses it, restoring the set point — the core mechanism of stable internal conditions.' },
+      { id: 'bio-10-q2', question: 'When blood glucose rises after eating, the pancreas releases:', options: ['Glucagon, to raise it further', 'Insulin, driving cells to absorb glucose and the liver to store it', 'Adrenaline', 'ADH'], correctIndex: 1,
+        why: 'Insulin lowers blood glucose by prompting uptake and storage; glucagon does the opposite when glucose is low. Their balance keeps levels stable.' },
+      { id: 'bio-10-q3', question: 'To cool down when overheated, the body:', options: ['Shivers and constricts blood vessels', 'Sweats and dilates blood vessels (vasodilation)', 'Stops all blood flow', 'Raises its set point'], correctIndex: 1,
+        why: 'Sweating removes heat by evaporation and vasodilation brings blood to the skin to lose heat — the hypothalamus-driven cooling response.' },
+      { id: 'bio-10-q4', question: 'The kidneys maintain water balance (osmoregulation) using the hormone:', options: ['Insulin', 'ADH (antidiuretic hormone)', 'Glucagon', 'Adrenaline'], correctIndex: 1,
+        why: 'ADH adjusts how much water the kidneys reabsorb: more ADH conserves water (concentrated urine), less allows its loss — keeping blood concentration stable.' },
+      { id: 'bio-10-q5', question: 'Positive feedback differs from negative feedback in that it:', options: ['Restores balance', 'Amplifies a change rather than reversing it (e.g. childbirth contractions)', 'Never occurs in the body', 'Controls temperature'], correctIndex: 1,
+        why: 'Positive feedback intensifies a process to a climax (birth, clotting) rather than stabilising — it\'s rarer and must be self-limiting to avoid runaway effects.' },
+    ],
+  },
+
+  // ══ WORLD HISTORY — ACADEMIC LADDER (A-LEVEL → DEGREE) ═══════════════════════
+  // Foundation & GCSE = wh-1..5 above. Higher tiers shift from WHAT happened to HOW we know it.
+
+  // ── A-LEVEL tier ──
+  {
+    id: 'wh-6', nodeId: 'world_history', order: 6, title: 'Working with Historical Sources', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    whyItMatters: 'History isn\'t a fixed list of facts to memorise — it\'s a discipline of evidence, and knowing how to weigh a source is a defence against propaganda in any era, including today\'s.',
+    explanation: 'At A-Level, history stops being a story to absorb and becomes a craft of evaluating evidence. Sources divide into primary (produced at the time — letters, laws, artefacts, photographs) and secondary (later accounts by historians analysing the primary material). The core skill is source evaluation, often taught through provenance: who produced this, when, where, why, and for whom? A wartime government poster and a soldier\'s private diary describe the same war very differently — and neither is simply "true" or "false." Rather than dismissing bias, historians USE it: a propaganda poster is unreliable about facts but excellent evidence of what a government wanted people to believe. Every source has a purpose and an audience that shape it. Corroboration (checking a claim against independent sources) and considering what\'s MISSING (whose voices left no records?) are essential. The mature historian treats no source as neutral and asks not just "what does this say?" but "what can this reliably tell me, given what it is?"',
+    bullets: [
+      'Primary sources are produced at the time; secondary sources analyse them later',
+      'Provenance: who made it, when, where, why, and for what audience — all shape a source',
+      'Bias isn\'t a reason to discard a source; a propaganda poster is great evidence of intent',
+      'Corroborate claims across independent sources; ask whose voices are missing',
+      'The key question shifts from "what does it say?" to "what can it reliably tell me, given what it is?"',
+    ],
+    example: 'A Soviet newspaper reporting a bumper harvest is unreliable on actual crop yields (censorship), but is strong evidence of what the regime wanted citizens to believe — bias becomes useful data, not just a flaw.',
+    quiz: [
+      { id: 'wh-6-q1', question: 'A primary source is one that was:', options: ['Written by a famous historian', 'Produced at the time of the events studied', 'Always completely reliable', 'Published most recently'], correctIndex: 1,
+        why: 'Primary sources (letters, laws, artefacts) originate from the period itself; secondary sources are later analyses by historians.' },
+      { id: 'wh-6-q2', question: '"Provenance" of a source refers to:', options: ['How long it is', 'Who produced it, when, where, why, and for whom', 'Whether it is famous', 'Its physical condition'], correctIndex: 1,
+        why: 'Provenance — the origin and context of a source — is what lets a historian judge what the source can reliably reveal.' },
+      { id: 'wh-6-q3', question: 'A biased propaganda poster is, to a historian:', options: ['Worthless and to be discarded', 'Useful evidence of what its creators wanted people to believe', 'A reliable record of facts', 'Only relevant to art historians'], correctIndex: 1,
+        why: 'Bias doesn\'t make a source useless — it makes it valuable for a different question: not "what happened" but "what did the producer want believed?"' },
+      { id: 'wh-6-q4', question: 'Corroboration in historical method means:', options: ['Trusting the oldest source', 'Checking a claim against independent sources', 'Ignoring bias', 'Using only secondary sources'], correctIndex: 1,
+        why: 'Cross-checking a claim against independent evidence strengthens (or undermines) it — a single source, however vivid, is a weak foundation.' },
+      { id: 'wh-6-q5', question: 'Considering "what is missing" from the record matters because:', options: ['Records are always complete', 'Whole groups often left few records, silently skewing the evidence', 'Missing sources never existed', 'Historians should only use what survives'], correctIndex: 1,
+        why: 'The surviving record over-represents the literate and powerful; asking whose voices are absent guards against mistaking a partial record for the whole story.' },
+    ],
+  },
+  {
+    id: 'wh-7', nodeId: 'world_history', order: 7, title: 'Causation — Why Things Happen', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Explaining WHY events happen is the heart of advanced history, and it is far subtler than naming a single cause. Historians distinguish long-term causes (deep structural conditions building over decades — alliance systems, economic pressures, ideologies) from short-term triggers (the immediate spark). The First World War illustrates this: the assassination of Archduke Franz Ferdinand in 1914 was the trigger, but the war\'s deep causes — militarism, entangling alliances, imperial rivalry, and nationalism — had been building for decades; the assassination lit a fuse already laid. Historians also weigh contingency (things could have gone differently — history is not inevitable) against structural forces (powerful pressures making some outcomes likely). And they rank causes by significance rather than just listing them, asking which were necessary (without it, no event) versus merely contributory. Avoiding two traps is essential: hindsight bias (assuming what happened was bound to happen) and monocausal explanation (blaming one factor for a complex event). Good historical explanation is a weighted web of causes, not a single arrow.',
+    bullets: [
+      'Distinguish long-term causes (deep, structural) from short-term triggers (the immediate spark)',
+      'WWI: the 1914 assassination was the trigger; militarism, alliances, imperialism, nationalism were the deep causes',
+      'Weigh contingency (it could have gone otherwise) against structural forces (some outcomes were likely)',
+      'Rank causes by significance — which were necessary versus merely contributory',
+      'Avoid hindsight bias (it was inevitable) and monocausal explanation (one cause for a complex event)',
+    ],
+    example: 'Blaming WWI solely on the Archduke\'s assassination is like blaming a forest fire only on the match — the "tinder" of alliances, arms races, and nationalism had accumulated for decades and made a large war likely once sparked.',
+    quiz: [
+      { id: 'wh-7-q1', question: 'The distinction between a long-term cause and a short-term trigger is that a trigger is:', options: ['A deep structural condition', 'The immediate spark that sets events off', 'Always the real cause', 'Irrelevant to historians'], correctIndex: 1,
+        why: 'Triggers are the immediate sparks; long-term causes are the deeper conditions that made the situation combustible in the first place.' },
+      { id: 'wh-7-q2', question: 'In explaining WWI, the assassination of Franz Ferdinand is best described as:', options: ['The sole cause', 'The trigger, atop deep causes like militarism and alliances', 'A long-term cause', 'Irrelevant'], correctIndex: 1,
+        why: 'The assassination lit a fuse already laid by decades of militarism, alliances, imperial rivalry, and nationalism — trigger, not root cause.' },
+      { id: 'wh-7-q3', question: '"Contingency" in history refers to the idea that:', options: ['Events were inevitable', 'Things could have turned out differently', 'History repeats exactly', 'Only structures matter'], correctIndex: 1,
+        why: 'Contingency acknowledges that outcomes were not fixed — chance and choices mattered — pushing back against the illusion of inevitability.' },
+      { id: 'wh-7-q4', question: 'Hindsight bias in historical explanation is the error of:', options: ['Using too many sources', 'Assuming what happened was bound to happen', 'Considering multiple causes', 'Reading primary sources'], correctIndex: 1,
+        why: 'Knowing the outcome makes it feel inevitable; good historians reconstruct the genuine uncertainty people faced at the time.' },
+      { id: 'wh-7-q5', question: 'A "monocausal" explanation is flawed because it:', options: ['Uses one cause for a complex event', 'Considers too many causes', 'Ignores the trigger', 'Relies on primary sources'], correctIndex: 0,
+        why: 'Complex events arise from a weighted web of interacting causes; reducing them to a single factor distorts the history.' },
+    ],
+  },
+  {
+    id: 'wh-8', nodeId: 'world_history', order: 8, title: 'Interpretations — Why Historians Disagree', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'A defining realisation of advanced history is that historians, looking at the same past, reach genuinely different conclusions — and this is not a failure but the nature of the discipline. Interpretations differ for several reasons. Historians ask different questions (a political vs an economic vs a social history of the same period highlights different things). They access different evidence (new archives open, old assumptions get challenged). And they write from their own time and perspective — each generation re-asks the past in light of its own concerns, which is why every era rewrites history. Take the origins of the Cold War: "orthodox" historians blamed Soviet expansionism; "revisionists" emphasised American economic motives; "post-revisionists" saw mutual misunderstanding and structural forces. None is simply "right" — each illuminates part of a complex reality. This does NOT mean history is mere opinion or that all views are equally valid: interpretations are still judged by how well they fit the evidence and withstand scrutiny. The skill is to understand WHY an interpretation was made, evaluate its evidential basis, and hold that good history is a disciplined, evidence-bound conversation rather than a settled set of facts.',
+    bullets: [
+      'Historians reach different conclusions from the same past — a feature, not a failure',
+      'Interpretations differ by the questions asked, evidence available, and the historian\'s own era',
+      'Cold War origins: orthodox (Soviet blame), revisionist (US motives), post-revisionist (mutual/structural)',
+      'This is not "mere opinion" — interpretations are still judged against the evidence',
+      'The skill: understand why an interpretation was made and how well it fits the evidence',
+    ],
+    example: 'Each generation rewrites history: the British Empire was narrated as a civilising mission in 1900, and is analysed through exploitation and resistance today — same events, different questions and values driving the interpretation.',
+    quiz: [
+      { id: 'wh-8-q1', question: 'That historians disagree about the same events is:', options: ['A failure of the discipline', 'A natural feature of history as evidence-based interpretation', 'Proof history is worthless', 'Always due to poor research'], correctIndex: 1,
+        why: 'Different questions, evidence, and perspectives legitimately yield different interpretations — disagreement is intrinsic to the discipline, not a defect.' },
+      { id: 'wh-8-q2', question: 'One key reason interpretations of the past change over time is that:', options: ['The past itself changes', 'Each generation re-asks the past in light of its own concerns', 'Facts are randomly invented', 'Older historians were always wrong'], correctIndex: 1,
+        why: 'Historians write from their own era, so new concerns and values lead each generation to ask fresh questions and reinterpret the evidence.' },
+      { id: 'wh-8-q3', question: 'The "revisionist" interpretation of the Cold War\'s origins emphasised:', options: ['Soviet expansionism alone', 'American economic and political motives', 'That it never happened', 'Mutual misunderstanding only'], correctIndex: 1,
+        why: 'Revisionists shifted blame toward US economic interests, challenging the orthodox view that focused on Soviet aggression — one lens among several.' },
+      { id: 'wh-8-q4', question: 'That interpretations differ does NOT mean:', options: ['Historians ask different questions', 'All interpretations are equally valid regardless of evidence', 'Perspective matters', 'History is a discipline'], correctIndex: 1,
+        why: 'Interpretive freedom is bounded by evidence: some readings fit the record far better than others, so history is not mere unconstrained opinion.' },
+      { id: 'wh-8-q5', question: 'When evaluating a historical interpretation, the key is to assess:', options: ['Whether it is the newest', 'How well it fits the evidence and why it was made', 'Whether it is popular', 'The historian\'s nationality'], correctIndex: 1,
+        why: 'A strong interpretation is one grounded in evidence and understood in its context — not simply the most recent or agreeable one.' },
+    ],
+  },
+
+  // ── DEGREE tier ──
+  {
+    id: 'wh-9', nodeId: 'world_history', order: 9, title: 'Historiography — How History Is Written', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    whyItMatters: 'Historiography — the history of history-writing — is where the discipline becomes self-aware, examining its own methods, biases, and blind spots. It is the intellectual core of a history degree.',
+    explanation: 'Historiography is the study of how history itself has been written — its schools, methods, and assumptions. Undergraduate history reveals that "history" is not one thing but a succession of approaches. The Whig interpretation (19th century) read the past as inevitable progress toward the present\'s liberal institutions — later criticised for reading history backwards. Marxist history foregrounded class struggle and economic forces as the engine of change. The Annales school (French, 20th century) shifted focus from kings and battles to deep structures — geography, climate, everyday life over the "longue durée" (long term). Social history recovered the lives of ordinary people, women, and the marginalised, whom traditional political history ignored. Postcolonial history challenged Eurocentric narratives and recovered the perspectives of the colonised. Postmodernism radically questioned whether objective historical truth is even attainable, emphasising that all history is constructed through language and narrative. A historian must know these traditions not as trivia but because every history book is written from within some framework — and reading historiographically means seeing the assumptions behind the account, not just the account.',
+    bullets: [
+      'Historiography is the study of how history has been written — its schools and assumptions',
+      'Whig history saw the past as inevitable progress; criticised for reading backwards from the present',
+      'Marxist history centres class struggle and economic forces',
+      'The Annales school shifted to deep structures — geography, everyday life, the long term',
+      'Social, postcolonial, and postmodern approaches recovered marginalised voices and questioned objectivity itself',
+    ],
+    example: 'A history of the French Revolution written by a Marxist (class conflict), an Annales historian (bread prices and demography), and a postmodernist (revolutionary language and symbolism) would be three genuinely different books — each shaped by its framework.',
+    quiz: [
+      { id: 'wh-9-q1', question: 'Historiography is the study of:', options: ['Ancient history only', 'How history itself has been written — its methods and schools', 'Geography', 'Famous historians\' biographies'], correctIndex: 1,
+        why: 'Historiography examines the writing of history — the approaches, assumptions, and debates behind historical accounts, not just the events.' },
+      { id: 'wh-9-q2', question: 'The "Whig interpretation" of history has been criticised for:', options: ['Ignoring politics', 'Reading the past as an inevitable progression toward the present', 'Using too much economics', 'Focusing on ordinary people'], correctIndex: 1,
+        why: 'Whig history judged the past by how it led to modern liberal institutions — a teleological error of reading history backwards from the present.' },
+      { id: 'wh-9-q3', question: 'The Annales school shifted historical focus toward:', options: ['Kings and battles', 'Deep structures like geography, climate, and everyday life over the long term', 'Only the 20th century', 'Individual biographies'], correctIndex: 1,
+        why: 'The Annales historians looked beyond events to the slow-moving structures (the "longue durée") shaping ordinary life across centuries.' },
+      { id: 'wh-9-q4', question: 'Postcolonial history primarily aims to:', options: ['Defend empires', 'Challenge Eurocentric narratives and recover colonised perspectives', 'Ignore non-European history', 'Focus only on economics'], correctIndex: 1,
+        why: 'Postcolonial history decentres the European viewpoint and restores the agency and perspectives of colonised peoples long written out of the record.' },
+      { id: 'wh-9-q5', question: 'Reading a history book "historiographically" means:', options: ['Checking only its facts', 'Seeing the framework and assumptions shaping the account', 'Ignoring the author', 'Trusting it completely'], correctIndex: 1,
+        why: 'Every account is written from within some tradition; reading historiographically means perceiving those underlying assumptions, not just the surface narrative.' },
+    ],
+  },
+  {
+    id: 'wh-10', nodeId: 'world_history', order: 10, title: 'History as a Discipline — Method and Limits', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'At its most advanced, history reflects on what it can and cannot know. The historian\'s craft rests on the archive — the surviving documentary record — and undergraduate work involves grappling with real archival research: the fragmentary, disordered, and biased nature of what survives. This forces confrontation with hard epistemological questions. Can history be objective? Historians largely reject both naïve objectivity (simply "telling it as it was," in Ranke\'s famous but oversimplified phrase) and pure relativism (all accounts equally valid). The mature position: history is an evidence-disciplined interpretation — historians can be wrong, claims can be tested against sources, and some accounts are demonstrably better supported, even though a single final "true" history is unattainable. The discipline has real limits: the record is radically incomplete (most of the past left no trace), it over-represents the powerful and literate, and historians\' own positions shape their questions. Yet these limits are managed, not fatal — through rigorous method, transparency about evidence and reasoning, peer scrutiny, and openness to revision. History thus sits between science and literature: it seeks truth through evidence and argument, while acknowledging that its object — the human past — can never be fully recovered or neutrally described. Understanding this is the intellectual maturity a history degree aims to instil.',
+    bullets: [
+      'The archive — the surviving record — is fragmentary, disordered, and biased toward the powerful',
+      'Historians reject both naïve objectivity and pure relativism',
+      'History is evidence-disciplined interpretation: testable, revisable, some accounts better supported',
+      'Real limits: incomplete record, over-representation of the literate, the historian\'s own position',
+      'Managed by rigorous method, transparency, peer scrutiny, and openness to revision',
+    ],
+    example: 'Ranke\'s ideal of writing history "as it actually was" is now seen as impossible in its pure form — yet the alternative isn\'t "anything goes"; it\'s disciplined interpretation where a claim about, say, medieval taxation can still be right or wrong against the surviving rolls.',
+    quiz: [
+      { id: 'wh-10-q1', question: 'The "archive" that historians depend on is best characterised as:', options: ['Complete and unbiased', 'Fragmentary, disordered, and biased toward the powerful', 'Purely digital', 'Always reliable'], correctIndex: 1,
+        why: 'Most of the past left no record, and what survives over-represents the literate and powerful — a central challenge of real historical research.' },
+      { id: 'wh-10-q2', question: 'On objectivity, most historians today hold that history is:', options: ['Perfectly objective, telling it exactly as it was', 'Pure opinion with no standards', 'Evidence-disciplined interpretation — testable but not a single final truth', 'Identical to fiction'], correctIndex: 2,
+        why: 'The mature view rejects both naïve objectivity and total relativism: interpretations are bounded and tested by evidence, even if no single definitive history exists.' },
+      { id: 'wh-10-q3', question: 'Ranke\'s phrase writing history "as it actually was" is now regarded as:', options: ['The perfect method', 'An impossible ideal in its pure form, though not licensing "anything goes"', 'Proof history is a science', 'Irrelevant'], correctIndex: 1,
+        why: 'Pure objectivity is unattainable, but historians still hold that evidence disciplines interpretation — the alternative to naïve objectivity is not relativism.' },
+      { id: 'wh-10-q4', question: 'A fundamental limit of historical knowledge is that the record:', options: ['Is always complete', 'Is radically incomplete and skewed toward the powerful and literate', 'Contains no bias', 'Covers everyone equally'], correctIndex: 1,
+        why: 'The surviving evidence is partial and unrepresentative, so historians must reason carefully about absence and bias rather than assume the record is the whole story.' },
+      { id: 'wh-10-q5', question: 'History is often described as sitting between science and literature because it:', options: ['Uses no evidence', 'Seeks truth through evidence and argument while acknowledging the past can\'t be fully recovered', 'Is purely creative', 'Never revises its claims'], correctIndex: 1,
+        why: 'Like science it tests claims against evidence; like literature it interprets and narrates — and it accepts the human past can never be fully or neutrally recovered.' },
+    ],
+  },
+
+  // ══ PHILOSOPHY — ACADEMIC LADDER (A-LEVEL → DEGREE) ═══════════════════════════
+  // Foundation & GCSE = phil-1..5 (what is philosophy, logic, ethics, epistemology, free will).
+
+  // ── A-LEVEL tier ──
+  {
+    id: 'phil-6', nodeId: 'philosophy', order: 6, title: 'Metaphysics — Mind, Body, and Reality', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    whyItMatters: 'Metaphysics asks the deepest questions there are — what exists, what you fundamentally are — and the answers shape everything from AI ethics to how we think about death.',
+    explanation: 'Metaphysics investigates the fundamental nature of reality and existence. One central problem is the mind-body problem: what is the relationship between the mental (thoughts, feelings, consciousness) and the physical (the brain, the body)? Substance dualism (Descartes) holds that mind and matter are two distinct kinds of thing — but then how does an immaterial mind interact with a physical brain? Physicalism (the dominant modern view) holds that everything, including mind, is ultimately physical — mental states are brain states — but struggles to explain subjective experience. A related question is personal identity: what makes you the same person over time, despite your body\'s cells replacing themselves and your memories changing? Candidate answers include bodily continuity, psychological continuity (memory and personality), and the view that the self is an illusion (Hume, and Buddhist thought). Metaphysics also asks about universals (does "redness" exist beyond red things?), the nature of time, and whether the world is deterministic. These questions can seem abstract but underpin concrete debates: whether an AI could be conscious, what death means, and whether a person post-brain-injury is "the same person."',
+    bullets: [
+      'Metaphysics studies the fundamental nature of reality and existence',
+      'Mind-body problem: dualism (mind and matter distinct) vs physicalism (all is physical)',
+      'Dualism struggles with interaction; physicalism struggles with subjective experience',
+      'Personal identity: bodily continuity, psychological continuity, or the self as illusion',
+      'These underpin real debates: AI consciousness, the meaning of death, identity after brain injury',
+    ],
+    example: 'The "Ship of Theseus": if every plank of a ship is gradually replaced, is it the same ship? The puzzle applies to you — your cells and memories change constantly, so what makes you the same person as your ten-year-old self?',
+    quiz: [
+      { id: 'phil-6-q1', question: 'The "mind-body problem" concerns:', options: ['How to stay healthy', 'The relationship between mental states and the physical brain/body', 'Whether the body exists', 'How muscles work'], correctIndex: 1,
+        why: 'It asks how the mental (thoughts, consciousness) relates to the physical (the brain) — one of metaphysics\' central and unresolved problems.' },
+      { id: 'phil-6-q2', question: 'Substance dualism (Descartes) holds that:', options: ['Everything is physical', 'Mind and matter are two distinct kinds of thing', 'The mind does not exist', 'The body is an illusion'], correctIndex: 1,
+        why: 'Dualism posits two fundamentally different substances — immaterial mind and physical matter — which raises the hard question of how they interact.' },
+      { id: 'phil-6-q3', question: 'A major difficulty for physicalism is explaining:', options: ['How brains work', 'Subjective conscious experience', 'The existence of matter', 'Basic biology'], correctIndex: 1,
+        why: 'If mental states are just brain states, it\'s hard to account for the felt, first-person quality of experience — the enduring challenge for physicalism.' },
+      { id: 'phil-6-q4', question: 'The problem of personal identity asks:', options: ['What your name is', 'What makes you the same person over time despite change', 'Where you were born', 'Your legal status'], correctIndex: 1,
+        why: 'Given that your cells replace themselves and memories shift, philosophers ask what — if anything — makes you continuous with your past self.' },
+      { id: 'phil-6-q5', question: 'The "psychological continuity" view of personal identity locates the self in:', options: ['The physical body only', 'Continuity of memory and personality', 'Your legal name', 'Nothing at all'], correctIndex: 1,
+        why: 'This view holds that you persist through overlapping chains of memory and psychology — as opposed to bodily continuity or the "no-self" position.' },
+    ],
+  },
+  {
+    id: 'phil-7', nodeId: 'philosophy', order: 7, title: 'Political Philosophy — The State, Justice, and Liberty', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Political philosophy asks how we should organise collective life: what justifies the state\'s authority, what makes a society just, and how to balance liberty and equality. The social contract tradition asks why anyone should obey a government. Hobbes argued that without a state, life would be a "war of all against all" — nasty, brutish, and short — so people rationally surrender freedom to a powerful sovereign for security. Locke argued for limited government protecting natural rights (life, liberty, property) with the consent of the governed — the intellectual basis of liberal democracy. Rousseau emphasised the "general will" of the community. On justice, John Rawls\'s hugely influential thought experiment asks: what principles would you choose for society from behind a "veil of ignorance," not knowing your own future position (rich or poor, talented or not)? He argued you\'d permit inequality only where it benefits the worst-off. Against this, Robert Nozick defended a minimal state and property rights, arguing that redistribution violates individual liberty. The deep tension running through all political philosophy is between liberty (freedom from interference) and equality (fairness of outcomes) — and between the individual and the collective.',
+    bullets: [
+      'Political philosophy asks what justifies state authority and what makes a society just',
+      'Social contract: Hobbes (security via a strong sovereign), Locke (limited government, natural rights)',
+      'Rawls\'s "veil of ignorance": choose principles not knowing your own future position',
+      'Nozick countered with a minimal state and strong property rights against redistribution',
+      'The enduring tension: liberty vs equality, individual vs collective',
+    ],
+    example: 'Rawls\'s veil of ignorance: designing a society without knowing if you\'ll be born rich or poor, able-bodied or disabled, you\'d likely build in protections for the worst-off — a powerful test of fair principles.',
+    quiz: [
+      { id: 'phil-7-q1', question: 'Social contract theory tries to explain:', options: ['How to write contracts', 'Why individuals should accept the authority of a state', 'How markets work', 'The origin of language'], correctIndex: 1,
+        why: 'Social contract theorists (Hobbes, Locke, Rousseau) ask what could justify state authority over free individuals — typically some form of consent or mutual benefit.' },
+      { id: 'phil-7-q2', question: 'Hobbes argued that without a state, human life would be:', options: ['Peaceful and free', 'A "war of all against all" — insecure and short', 'Perfectly equal', 'Unchanged'], correctIndex: 1,
+        why: 'Hobbes\'s bleak view of the "state of nature" justified surrendering freedom to a strong sovereign in exchange for security and order.' },
+      { id: 'phil-7-q3', question: 'Locke\'s political philosophy emphasised:', options: ['Absolute monarchy', 'Limited government protecting natural rights with the consent of the governed', 'Abolishing property', 'Rule by philosophers'], correctIndex: 1,
+        why: 'Locke\'s idea of limited government safeguarding life, liberty, and property by consent became the intellectual foundation of liberal democracy.' },
+      { id: 'phil-7-q4', question: 'Rawls\'s "veil of ignorance" asks you to choose principles of justice:', options: ['Knowing you will be wealthy', 'Without knowing your own future position in society', 'Based on your current advantages', 'By majority vote'], correctIndex: 1,
+        why: 'Not knowing whether you\'ll be rich or poor, talented or not, you\'d choose fair principles — Rawls argued you\'d protect the worst-off.' },
+      { id: 'phil-7-q5', question: 'The central tension running through political philosophy is between:', options: ['War and peace', 'Liberty and equality (and individual vs collective)', 'Past and future', 'Rich and famous'], correctIndex: 1,
+        why: 'Much of political philosophy negotiates the trade-off between freedom from interference and fairness of outcomes, and between individual and collective interests.' },
+    ],
+  },
+  {
+    id: 'phil-8', nodeId: 'philosophy', order: 8, title: 'Philosophy of Religion — Arguments About God', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Philosophy of religion applies rigorous argument to claims about God\'s existence and nature — a major A-Level topic examined through classic arguments and objections. Arguments FOR God\'s existence include: the cosmological argument (everything has a cause, so there must be a first uncaused cause — but why must the chain have a beginning, and what caused God?); the teleological/design argument (the universe\'s order and apparent fine-tuning suggest a designer — challenged by evolution, which explains biological "design" without one); and the ontological argument (God, defined as the greatest conceivable being, must exist, since existing is greater than not — a famously slippery argument most find suspicious but hard to refute cleanly). The strongest argument AGAINST is the problem of evil: if God is all-powerful, all-knowing, and all-good, why does terrible suffering exist? Responses (theodicies) include the free-will defence (evil is the price of genuine freedom) and soul-making (suffering builds moral character) — each with its own difficulties. The point of studying these is not to settle the question but to see how reason can be applied to the deepest questions, and to appreciate that thoughtful people hold different positions for serious reasons.',
+    bullets: [
+      'Cosmological argument: a first uncaused cause — but why must the causal chain begin, and what caused God?',
+      'Design argument: cosmic order implies a designer — challenged by evolution explaining biological "design"',
+      'Ontological argument: God as the greatest conceivable being must exist — slippery and much debated',
+      'Problem of evil: why does suffering exist if God is all-powerful, all-knowing, and all-good?',
+      'Theodicies (free-will defence, soul-making) respond, each with difficulties',
+    ],
+    example: 'The problem of evil in one line: an all-good, all-powerful God would want to prevent suffering and be able to — yet suffering exists. Reconciling all three claims is the central challenge for theism, and the free-will defence is the most common response.',
+    quiz: [
+      { id: 'phil-8-q1', question: 'The cosmological argument for God reasons from:', options: ['The beauty of nature', 'The need for a first cause of everything', 'Personal experience', 'The definition of God'], correctIndex: 1,
+        why: 'It argues that a chain of causes requires a first, uncaused cause (God) — though critics ask why the chain must begin and what caused God.' },
+      { id: 'phil-8-q2', question: 'The design (teleological) argument is most directly challenged by:', options: ['The problem of evil', 'Evolution, which explains apparent biological design without a designer', 'The ontological argument', 'Mathematics'], correctIndex: 1,
+        why: 'Darwinian evolution accounts for the appearance of design in living things through natural selection, undercutting design as evidence of a designer.' },
+      { id: 'phil-8-q3', question: 'The ontological argument tries to prove God exists from:', options: ['Scientific evidence', 'The very definition of God as the greatest conceivable being', 'The history of religion', 'The problem of evil'], correctIndex: 1,
+        why: 'It argues that a greatest conceivable being must exist (since existing is greater than not) — a purely conceptual argument many find suspicious yet hard to refute.' },
+      { id: 'phil-8-q4', question: 'The problem of evil challenges belief in a God who is:', options: ['Distant and uninvolved', 'Simultaneously all-powerful, all-knowing, and all-good', 'One of many gods', 'Newly created'], correctIndex: 1,
+        why: 'If God has all three attributes, the existence of terrible suffering seems inconsistent — the core difficulty the argument raises for theism.' },
+      { id: 'phil-8-q5', question: 'The "free-will defence" responds to the problem of evil by arguing that:', options: ['Evil does not exist', 'Evil is the price of genuine human freedom', 'God is not good', 'Suffering is imaginary'], correctIndex: 1,
+        why: 'It holds that a world with free beings capable of real moral choice is better than one without, and that free will makes some evil possible — a leading theodicy.' },
+    ],
+  },
+
+  // ── DEGREE tier ──
+  {
+    id: 'phil-9', nodeId: 'philosophy', order: 9, title: 'Philosophy of Mind — Consciousness', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    whyItMatters: 'Consciousness is arguably the deepest unsolved problem in all of science and philosophy — and as AI advances, the question of what has a mind becomes urgently practical.',
+    explanation: 'Philosophy of mind at degree level centres on consciousness — the fact that there is "something it is like" to be you. David Chalmers distinguished the "easy problems" (explaining brain functions like attention and memory, hard but tractable) from the "hard problem": why is any physical process accompanied by subjective experience at all? You could imagine a being physically identical to you but with no inner experience — a "philosophical zombie" — and the fact that this seems conceivable suggests experience isn\'t fully captured by physical description. Thomas Nagel\'s essay "What is it like to be a bat?" argued that we can never truly know a bat\'s subjective experience of echolocation, however much we learn about its brain — subjectivity resists objective science. Frank Jackson\'s "Mary\'s Room" thought experiment: Mary knows every physical fact about colour vision but has only seen black and white; when she first sees red, does she learn something new? If yes, then physical facts don\'t exhaust reality. Positions range from physicalism (consciousness is physical, the puzzles are illusions or will dissolve) to property dualism and panpsychism (consciousness is fundamental). No consensus exists — consciousness remains where our best science and philosophy hit their limit, and the stakes rise as we build ever-more-sophisticated AI.',
+    bullets: [
+      'Consciousness: there is "something it is like" to be you — subjective experience',
+      'Chalmers\' "hard problem": why is any physical process accompanied by experience at all?',
+      '"Philosophical zombies": a physical duplicate with no inner experience seems conceivable',
+      'Nagel ("bat") and Jackson ("Mary\'s Room") argue subjectivity resists objective/physical description',
+      'Positions span physicalism, property dualism, and panpsychism — no consensus; stakes rise with AI',
+    ],
+    example: 'Mary\'s Room: Mary knows every physical fact about colour but has only seen black-and-white. On finally seeing red, if she learns something new ("so THAT\'s what red looks like"), then knowing all the physical facts left something out — a challenge to physicalism.',
+    quiz: [
+      { id: 'phil-9-q1', question: 'Chalmers\' "hard problem" of consciousness is:', options: ['How memory works', 'Why physical processes are accompanied by subjective experience at all', 'How neurons fire', 'How to measure the brain'], correctIndex: 1,
+        why: 'The "easy" problems explain brain functions; the hard problem asks why any of it is accompanied by felt, first-person experience — which physical accounts seem to leave out.' },
+      { id: 'phil-9-q2', question: 'A "philosophical zombie" is a hypothetical being that is:', options: ['Undead', 'Physically identical to a person but lacks any inner experience', 'A malfunctioning robot', 'Unconscious from injury'], correctIndex: 1,
+        why: 'The conceivability of a physical duplicate with no experience is used to argue that consciousness isn\'t fully captured by physical facts.' },
+      { id: 'phil-9-q3', question: 'Nagel\'s "What is it like to be a bat?" argues that:', options: ['Bats are conscious', 'We cannot fully know another being\'s subjective experience through objective facts', 'Echolocation is simple', 'Only humans think'], correctIndex: 1,
+        why: 'However much we learn about bat brains, we can\'t access the bat\'s point of view — subjectivity resists complete objective, third-person description.' },
+      { id: 'phil-9-q4', question: 'The "Mary\'s Room" thought experiment challenges physicalism by suggesting that:', options: ['Colour does not exist', 'Knowing all physical facts might still leave out what experience is like', 'Mary is not real', 'Science is useless'], correctIndex: 1,
+        why: 'If Mary learns something genuinely new on first seeing red, then complete physical knowledge didn\'t include the subjective quality of experience.' },
+      { id: 'phil-9-q5', question: 'Panpsychism is the view that consciousness is:', options: ['An illusion', 'A fundamental feature of reality, present in some form widely', 'Only in humans', 'Produced solely by language'], correctIndex: 1,
+        why: 'Panpsychism treats consciousness as fundamental rather than emergent — a serious minority position responding to the hard problem, not a fringe curiosity.' },
+    ],
+  },
+  {
+    id: 'phil-10', nodeId: 'philosophy', order: 10, title: 'Metaethics and Philosophical Traditions', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'Undergraduate philosophy distinguishes normative ethics (which actions are right — utilitarianism, Kantian duty, virtue ethics) from metaethics, which asks deeper questions about the nature of morality itself. Is morality objective or invented? Moral realism holds that moral facts exist independently of what anyone thinks (torturing children is wrong as a fact, like a mathematical truth). Anti-realist positions disagree: emotivism holds that moral statements just express feelings ("murder is wrong" ≈ "murder — boo!"), while error theory (Mackie) claims all moral statements are systematically false because the objective values they presuppose don\'t exist. Between these lie subtle positions like constructivism. A key challenge is the is-ought gap (Hume): you cannot logically derive what OUGHT to be from what IS — facts alone never entail values. Philosophy also divides into two broad traditions students must navigate: analytic philosophy (dominant in the English-speaking world) prizes logical clarity, argument, and precision, engaging closely with science and language; continental philosophy (associated with figures like Heidegger, Sartre, Foucault, and Derrida) is more historical, interpretive, and concerned with existence, power, and meaning, often in a literary style. The two can seem almost different disciplines. Mastering philosophy means holding rigorous argument and profound questioning together — knowing both what can be clearly proven and which questions may forever resist final answers.',
+    bullets: [
+      'Metaethics asks about the nature of morality itself, beneath normative ethics',
+      'Moral realism: moral facts exist independently; anti-realism (emotivism, error theory) denies this',
+      'The is-ought gap (Hume): you cannot derive values ("ought") from facts ("is") alone',
+      'Analytic tradition: logical clarity, argument, precision, close to science and language',
+      'Continental tradition: historical, interpretive, concerned with existence, power, and meaning',
+    ],
+    example: 'Hume\'s is-ought gap: from "this action causes suffering" (a fact) you cannot logically deduce "this action is wrong" (a value) without smuggling in a further value premise — a challenge that haunts all moral reasoning.',
+    quiz: [
+      { id: 'phil-10-q1', question: 'Metaethics differs from normative ethics in that it asks:', options: ['Which specific actions are right', 'Deeper questions about the nature and status of morality itself', 'How to be happy', 'Nothing philosophical'], correctIndex: 1,
+        why: 'Normative ethics asks which acts are right; metaethics steps back to ask what morality even is — whether moral facts exist, what moral claims mean.' },
+      { id: 'phil-10-q2', question: 'Moral realism is the view that:', options: ['Morality is just personal opinion', 'Moral facts exist independently of what anyone thinks', 'Morality does not exist', 'Morals are only feelings'], correctIndex: 1,
+        why: 'Realists hold there are objective moral truths (like "gratuitous cruelty is wrong") independent of human attitudes — anti-realists deny this.' },
+      { id: 'phil-10-q3', question: 'Emotivism holds that moral statements:', options: ['State objective facts', 'Primarily express the speaker\'s feelings or attitudes', 'Are always true', 'Are mathematical'], correctIndex: 1,
+        why: 'On emotivism, "murder is wrong" essentially expresses disapproval ("murder — boo!") rather than stating a fact — an anti-realist position.' },
+      { id: 'phil-10-q4', question: 'Hume\'s "is-ought gap" points out that:', options: ['Facts and values are identical', 'You cannot logically derive what ought to be from what merely is', 'Nothing can be known', 'Ethics is easy'], correctIndex: 1,
+        why: 'No set of purely factual premises entails a moral conclusion without an additional value premise — a foundational challenge for moral reasoning.' },
+      { id: 'phil-10-q5', question: 'The analytic tradition of philosophy is characterised by its emphasis on:', options: ['Literary and historical interpretation', 'Logical clarity, precise argument, and engagement with language and science', 'Rejecting all argument', 'Poetry'], correctIndex: 1,
+        why: 'Analytic philosophy prizes rigour, clarity, and argument (close to logic and science), in contrast with the more interpretive, historical continental tradition.' },
+    ],
+  },
+
+  // ══ PSYCHOLOGY — ACADEMIC LADDER (A-LEVEL → DEGREE) ═══════════════════════════
+  // Foundation & GCSE = psych-1..5 (foundations, biases, motivation, social, personality).
+
+  // ── A-LEVEL tier ──
+  {
+    id: 'psych-6', nodeId: 'psychology', order: 6, title: 'Research Methods in Psychology', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    whyItMatters: 'Psychology only counts as a science because of its methods — and knowing how psychological research works is what lets you tell a real finding from a clickbait headline.',
+    explanation: 'What separates scientific psychology from pop-psychology and intuition is rigorous method. Experiments manipulate an independent variable and measure its effect on a dependent variable while controlling other factors, allowing claims about cause and effect. The control group and randomisation are essential: without a comparison group, you can\'t know if the treatment did anything, and random allocation prevents systematic bias. A hypothesis must be operationalised — defined in measurable terms ("stress" becomes "score on a validated stress questionnaire"). Studies must guard against confounding variables (a third factor secretly driving results), demand characteristics (participants guessing the aim and altering behaviour), and researcher bias (double-blind designs help). Beyond experiments, psychology uses correlational studies (measuring relationships without manipulation — but correlation isn\'t causation), observations, case studies, and self-report. Findings are assessed for reliability (would it replicate?) and validity (does it measure what it claims, and generalise beyond the sample?). Ethics matter deeply: informed consent, the right to withdraw, protection from harm, and confidentiality are non-negotiable, learned partly from notorious past studies (Milgram, Zimbardo) that would not be permitted today.',
+    bullets: [
+      'Experiments manipulate an independent variable, measure a dependent variable, control the rest — enabling causal claims',
+      'Control groups and randomisation are essential to isolate the effect',
+      'Operationalise variables (define them measurably); guard against confounds and demand characteristics',
+      'Correlational studies show relationships but not causation; other methods include observation and case study',
+      'Judge findings on reliability and validity; ethics (consent, right to withdraw, no harm) are non-negotiable',
+    ],
+    example: 'To test if sleep affects memory, randomly assign people to a full night vs restricted sleep (independent variable), then measure recall on a word test (dependent variable) — the control group and randomisation let you attribute differences to sleep, not chance.',
+    quiz: [
+      { id: 'psych-6-q1', question: 'In an experiment, the variable the researcher manipulates is the:', options: ['Dependent variable', 'Independent variable', 'Confounding variable', 'Control group'], correctIndex: 1,
+        why: 'The independent variable is manipulated; its effect is measured on the dependent variable — the structure that allows causal conclusions.' },
+      { id: 'psych-6-q2', question: 'A control group is necessary because without it you cannot:', options: ['Publish results', 'Know whether the treatment actually caused any change', 'Recruit participants', 'Measure anything'], correctIndex: 1,
+        why: 'The control group provides the comparison baseline; without it, you can\'t tell if the outcome was due to the treatment or would have happened anyway.' },
+      { id: 'psych-6-q3', question: 'To "operationalise" a variable like stress means to:', options: ['Ignore it', 'Define it in specific, measurable terms', 'Assume it is obvious', 'Remove it from the study'], correctIndex: 1,
+        why: 'Operationalisation turns a vague concept into something measurable (e.g. a validated questionnaire score), so it can be studied objectively.' },
+      { id: 'psych-6-q4', question: 'A correlational study, unlike an experiment, cannot establish:', options: ['A relationship between variables', 'Causation between the variables', 'Any data at all', 'Reliability'], correctIndex: 1,
+        why: 'Correlation shows variables relate but not that one causes the other — a third factor could drive both, or the direction could be reversed.' },
+      { id: 'psych-6-q5', question: 'Studies like Milgram\'s obedience experiment are important partly because they:', options: ['Would be encouraged today', 'Shaped modern ethical rules like informed consent and protection from harm', 'Used no participants', 'Had no findings'], correctIndex: 1,
+        why: 'Their ethical problems drove the development of strict modern safeguards (consent, right to withdraw, protection from harm) that such studies would now have to meet.' },
+    ],
+  },
+  {
+    id: 'psych-7', nodeId: 'psychology', order: 7, title: 'Memory — Models and Reliability', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Memory is a core A-Level topic where models meet real-world stakes. The multi-store model (Atkinson-Shiffrin) proposed three stores: sensory memory (brief), short-term memory (limited to ~7 items for ~18 seconds), and long-term memory (potentially unlimited and permanent), with rehearsal transferring information between them. This was refined by the working memory model (Baddeley-Hitch), which showed short-term memory is not a single store but an active system with components (a central executive directing a "phonological loop" for sound and a "visuospatial sketchpad" for images) — explaining why you can do two different-type tasks at once but not two of the same type. Crucially, memory is reconstructive, not a recording: each time you recall, you rebuild the memory and can alter it. Elizabeth Loftus\'s research on eyewitness testimony showed that leading questions can implant false details — asking how fast cars were going when they "smashed" versus "hit" changed speed estimates and even made people "remember" broken glass that wasn\'t there. This has profound real-world consequences: mistaken eyewitness identification is a leading cause of wrongful convictions. Memory feels like playback but is closer to storytelling — reconstructed, fallible, and susceptible to suggestion.',
+    bullets: [
+      'Multi-store model: sensory → short-term (~7 items, ~18s) → long-term, via rehearsal',
+      'Working memory model: short-term memory is an active multi-component system, not one store',
+      'Memory is reconstructive — rebuilt on each recall, and alterable',
+      'Loftus: leading questions implant false details in eyewitness memory',
+      'Real stakes: mistaken eyewitness testimony is a leading cause of wrongful convictions',
+    ],
+    example: 'Loftus\'s study: participants who watched a car crash and were asked how fast the cars went when they "smashed into" each other gave higher speed estimates — and were more likely to falsely "remember" broken glass — than those asked when the cars "hit," proving memory is reconstructed.',
+    quiz: [
+      { id: 'psych-7-q1', question: 'The multi-store model of memory proposes the sequence:', options: ['Long-term → short-term → sensory', 'Sensory → short-term → long-term', 'A single unified store', 'Short-term only'], correctIndex: 1,
+        why: 'Atkinson-Shiffrin\'s model flows sensory → short-term → long-term, with rehearsal moving information along the chain.' },
+      { id: 'psych-7-q2', question: 'The working memory model improved on the multi-store model by showing short-term memory is:', options: ['A single passive store', 'An active system with separate components for sound and vision', 'Unlimited in capacity', 'The same as long-term memory'], correctIndex: 1,
+        why: 'Baddeley and Hitch revealed short-term memory as an active system (central executive plus phonological loop and visuospatial sketchpad), not one simple store.' },
+      { id: 'psych-7-q3', question: 'Memory is described as "reconstructive" because:', options: ['It records events perfectly', 'It is rebuilt on each recall and can be altered', 'It never changes', 'It only stores images'], correctIndex: 1,
+        why: 'Rather than replaying a recording, the brain reconstructs a memory each time — which is why memories can shift and false details can enter.' },
+      { id: 'psych-7-q4', question: 'Loftus\'s eyewitness research demonstrated that:', options: ['Memory is perfectly accurate', 'Leading questions can implant false details into memory', 'People never forget', 'Only children misremember'], correctIndex: 1,
+        why: 'Wording of questions altered what participants "remembered," showing memory is malleable and vulnerable to suggestion — the reconstructive nature in action.' },
+      { id: 'psych-7-q5', question: 'A major real-world consequence of memory\'s unreliability is:', options: ['Better exam results', 'Mistaken eyewitness testimony contributing to wrongful convictions', 'Perfect court records', 'Nothing significant'], correctIndex: 1,
+        why: 'Because memory is reconstructive and suggestible, confident eyewitnesses can be sincerely wrong — a leading cause of wrongful convictions later overturned by DNA.' },
+    ],
+  },
+  {
+    id: 'psych-8', nodeId: 'psychology', order: 8, title: 'The Major Psychological Approaches', tier: 'alevel',
+    xpReward: 45, difficulty: 'hard',
+    explanation: 'Psychology is not one unified theory but several "approaches," each a different lens on why people think and behave as they do — and A-Level requires knowing their assumptions, strengths, and clashes. The behaviourist approach (Pavlov, Skinner) studies only observable behaviour, explaining it through conditioning: we learn by association (classical conditioning) and consequences (reinforcement and punishment) — powerful but ignoring the mind. The cognitive approach treats the mind as an information processor, studying internal processes like memory, attention, and perception through inference and experiment — the dominant modern approach. The biological approach explains behaviour through the brain, neurochemistry, hormones, genetics, and evolution — reductionist but scientifically grounded. The psychodynamic approach (Freud) emphasises the unconscious mind, early childhood, and internal conflict — hugely influential culturally but criticised as unscientific and unfalsifiable. The humanistic approach (Rogers, Maslow) rejects determinism, emphasising free will, subjective experience, and self-actualisation. Each approach is partial: behaviourism explains phobias well but not language; biology explains depression\'s chemistry but not its meaning. The mature view is that human behaviour is best understood through multiple complementary levels rather than any single approach — the "biopsychosocial" model.',
+    bullets: [
+      'Behaviourist: only observable behaviour, learned by conditioning (association and consequences)',
+      'Cognitive: the mind as information processor — memory, attention, perception; the dominant approach',
+      'Biological: behaviour via brain, neurochemistry, genetics, and evolution',
+      'Psychodynamic (Freud): the unconscious and childhood — influential but criticised as unscientific',
+      'Humanistic: free will, subjective experience, self-actualisation; best understood via multiple levels (biopsychosocial)',
+    ],
+    example: 'Explaining depression: the biological approach points to serotonin and genetics, the cognitive to negative thought patterns, the psychodynamic to unresolved loss, the humanistic to blocked self-actualisation — each captures part of a full picture.',
+    quiz: [
+      { id: 'psych-8-q1', question: 'The behaviourist approach studies:', options: ['The unconscious mind', 'Only observable behaviour, explained through conditioning', 'Brain chemistry', 'Free will'], correctIndex: 1,
+        why: 'Behaviourism (Pavlov, Skinner) restricts itself to observable behaviour learned through classical and operant conditioning, deliberately ignoring internal mental states.' },
+      { id: 'psych-8-q2', question: 'The cognitive approach treats the mind as:', options: ['A blank slate', 'An information processor studied through memory, attention, and perception', 'Purely unconscious', 'Irrelevant'], correctIndex: 1,
+        why: 'The cognitive approach models the mind as processing information (like a computer), inferring internal processes from behaviour — the dominant modern paradigm.' },
+      { id: 'psych-8-q3', question: 'The psychodynamic approach (Freud) is often criticised for being:', options: ['Too scientific', 'Unfalsifiable and unscientific', 'Purely biological', 'Focused only on behaviour'], correctIndex: 1,
+        why: 'Its emphasis on an unobservable unconscious makes many of its claims hard or impossible to test — the main scientific criticism, despite its cultural influence.' },
+      { id: 'psych-8-q4', question: 'The humanistic approach is distinctive in emphasising:', options: ['Determinism and conditioning', 'Free will, subjective experience, and self-actualisation', 'Only brain chemistry', 'The unconscious'], correctIndex: 1,
+        why: 'Humanistic psychology (Rogers, Maslow) rejects determinism, focusing on personal agency, subjective experience, and growth toward self-actualisation.' },
+      { id: 'psych-8-q5', question: 'The mature view of the different approaches is that human behaviour is:', options: ['Explained fully by one approach', 'Best understood through multiple complementary levels (biopsychosocial)', 'Impossible to study', 'Only biological'], correctIndex: 1,
+        why: 'Each approach is partial; combining biological, psychological, and social levels (the biopsychosocial model) gives the fullest understanding.' },
+    ],
+  },
+
+  // ── DEGREE tier ──
+  {
+    id: 'psych-9', nodeId: 'psychology', order: 9, title: 'Biopsychology and the Brain', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    whyItMatters: 'Everything you think, feel, and are emerges from three pounds of tissue — and biopsychology is where mind meets biology, driving advances from antidepressants to brain-computer interfaces.',
+    explanation: 'Biopsychology studies the biological basis of behaviour in rigorous detail. The neuron is the fundamental unit: it fires an all-or-nothing electrical impulse (the action potential) down its axon, then releases neurotransmitters across the synapse to the next neuron. Neurotransmitters are central to behaviour and psychiatry: dopamine (reward, motivation, movement — disrupted in Parkinson\'s and addiction), serotonin (mood — targeted by antidepressants), GABA (the main inhibitory transmitter, calming — targeted by anti-anxiety drugs), and glutamate (the main excitatory transmitter). The brain is functionally organised: the cerebral cortex (higher thought), with lobes for vision (occipital), touch (parietal), hearing (temporal), and planning/personality (frontal); the limbic system for emotion and memory (the amygdala for fear, the hippocampus for forming memories); and the brainstem for basic survival functions. Localisation of function is real but partial — many functions are distributed, and the brain shows plasticity (reorganising after damage). Methods include brain imaging (fMRI showing blood-flow-inferred activity, EEG showing electrical activity), lesion studies (famously Phineas Gage, whose personality changed after frontal-lobe damage), and studying split-brain patients. Modern biopsychology integrates genetics, hormones, the nervous system, and evolution — increasingly showing that the old mind-vs-body divide dissolves under close examination.',
+    bullets: [
+      'Neurons fire all-or-nothing action potentials, then signal chemically across synapses',
+      'Key neurotransmitters: dopamine (reward), serotonin (mood), GABA (inhibitory/calming), glutamate (excitatory)',
+      'Brain organisation: cortex (thought) with four lobes, limbic system (emotion/memory), brainstem (survival)',
+      'Localisation is real but partial; the brain shows plasticity (reorganising after damage)',
+      'Methods: fMRI, EEG, lesion studies (Phineas Gage), split-brain research',
+    ],
+    example: 'Phineas Gage survived an iron rod destroying much of his frontal lobe in 1848 but underwent a dramatic personality change — early, striking evidence that specific brain regions underpin specific psychological functions like personality and self-control.',
+    quiz: [
+      { id: 'psych-9-q1', question: 'Neurons communicate with each other across the synapse by:', options: ['Direct electrical contact only', 'Releasing chemical neurotransmitters', 'Touching physically', 'Sound'], correctIndex: 1,
+        why: 'The impulse is electrical within the neuron but crosses to the next neuron chemically, via neurotransmitters — the target of most psychiatric drugs.' },
+      { id: 'psych-9-q2', question: 'Antidepressant drugs (SSRIs) primarily target which neurotransmitter system?', options: ['Dopamine', 'Serotonin', 'Glutamate', 'Acetylcholine'], correctIndex: 1,
+        why: 'SSRIs (selective serotonin reuptake inhibitors) act on serotonin, closely linked to mood regulation — a direct application of biopsychology.' },
+      { id: 'psych-9-q3', question: 'The frontal lobe is especially associated with:', options: ['Vision', 'Planning, decision-making, and personality', 'Hearing', 'Balance'], correctIndex: 1,
+        why: 'The frontal lobe handles higher functions like planning and personality — famously revealed when Phineas Gage\'s frontal damage altered his character.' },
+      { id: 'psych-9-q4', question: 'Brain "plasticity" refers to the brain\'s ability to:', options: ['Produce plastic', 'Reorganise itself, including after damage', 'Stay completely fixed', 'Shrink only'], correctIndex: 1,
+        why: 'Plasticity means the brain can rewire and reassign functions with experience or after injury — qualifying the idea of strict, fixed localisation.' },
+      { id: 'psych-9-q5', question: 'An fMRI scan infers brain activity by measuring:', options: ['Electrical impulses directly', 'Blood flow to active regions', 'Neurotransmitter levels', 'Skull thickness'], correctIndex: 1,
+        why: 'fMRI tracks blood oxygenation as a proxy for neural activity, letting researchers see which regions are more active during tasks (EEG, by contrast, reads electrical activity).' },
+    ],
+  },
+  {
+    id: 'psych-10', nodeId: 'psychology', order: 10, title: 'The Science of Psychology — Statistics and Rigour', tier: 'degree',
+    xpReward: 55, difficulty: 'hard',
+    explanation: 'A psychology degree is, at its core, training in scientific reasoning about human behaviour — and that means statistics and hard questions about rigour. Because psychology studies variable, noisy phenomena, it relies on inferential statistics to distinguish real effects from chance. The p-value asks: if there were no real effect, how likely is data this extreme? By convention p < 0.05 is called "statistically significant" — but this is widely misunderstood: it does NOT mean the effect is large, important, or 95% certain to be real. Effect size (how big the effect is) matters as much as significance, and statistical power (a study\'s ability to detect a real effect, often too low in underpowered studies) is crucial. This matters enormously because psychology has faced a replication crisis: when researchers tried to repeat famous findings, a large proportion failed to replicate. Causes include p-hacking (analysing data many ways until something hits significance), publication bias (journals favour positive, exciting results, so failures stay in "file drawers"), small samples, and HARKing (hypothesising after results are known). The discipline\'s response — pre-registration (declaring hypotheses and analyses before collecting data), larger samples, sharing data, direct replication, and valuing null results — represents science self-correcting. Understanding this makes you a critical consumer of the endless stream of "a study shows..." headlines, most of which oversell fragile findings. The lesson is dual: psychology can be genuinely rigorous, and rigour requires constant vigilance against the ways researchers (and readers) fool themselves.',
+    bullets: [
+      'Psychology relies on inferential statistics to separate real effects from chance',
+      'p < 0.05 ("significant") does NOT mean the effect is large, important, or 95% certain to be real',
+      'Effect size and statistical power matter as much as significance',
+      'The replication crisis: many famous findings failed to replicate (p-hacking, publication bias, small samples)',
+      'The fix — pre-registration, larger samples, open data, valuing null results — is science self-correcting',
+    ],
+    example: 'The replication crisis in action: many textbook effects (some "power posing" and "ego depletion" findings) failed when independently repeated — prompting pre-registration, where researchers lock in their hypothesis and analysis plan before seeing the data, preventing p-hacking.',
+    quiz: [
+      { id: 'psych-10-q1', question: 'A p-value below 0.05 ("statistically significant") means:', options: ['The effect is definitely large and important', 'Data this extreme would be unlikely if there were no real effect', 'The result is 95% certain to be true', 'The study cannot be wrong'], correctIndex: 1,
+        why: 'It only concerns the probability of the data under a "no effect" assumption — not the size, importance, or certainty of the effect, all commonly misread.' },
+      { id: 'psych-10-q2', question: 'Alongside significance, a crucial thing to know about a finding is its:', options: ['Author\'s name', 'Effect size — how big the effect actually is', 'Publication date', 'Journal cost'], correctIndex: 1,
+        why: 'A statistically significant effect can still be trivially small; effect size tells you whether it actually matters in practice.' },
+      { id: 'psych-10-q3', question: 'The "replication crisis" refers to the discovery that:', options: ['Psychology has too many participants', 'Many published findings fail when researchers try to repeat them', 'All psychology is fake', 'Experiments are illegal'], correctIndex: 1,
+        why: 'A large share of notable findings didn\'t hold up on independent replication, exposing weaknesses in methods and publishing incentives.' },
+      { id: 'psych-10-q4', question: '"P-hacking" is the practice of:', options: ['Improving study design', 'Analysing data in many ways until something reaches significance', 'Increasing sample size', 'Sharing data openly'], correctIndex: 1,
+        why: 'Trying many analyses and reporting only the "significant" one inflates false positives — a key driver of unreplicable results.' },
+      { id: 'psych-10-q5', question: 'Pre-registration helps improve research rigour by:', options: ['Making studies cheaper', 'Locking in hypotheses and analysis plans before data collection, preventing p-hacking', 'Guaranteeing significant results', 'Avoiding participants'], correctIndex: 1,
+        why: 'Declaring the hypothesis and analysis in advance stops researchers from fishing for significance after the fact — a central reform addressing the replication crisis.' },
     ],
   },
 ];
